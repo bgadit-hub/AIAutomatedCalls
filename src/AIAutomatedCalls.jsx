@@ -22,7 +22,7 @@ import {
 import { supabase } from './supabase';
 import BookingPage from './BookingPage';
 import {
-  useClients, useLeads, useAdminStats,
+  useClients, useLeads, useAdminStats, useAnalyticsData,
   useClientContext, useRecordings, useAppointments,
 } from './useSupabase';
 
@@ -104,7 +104,8 @@ const MOCK_RECS=[{id:1,from:"+1 (512) 884-2211",dur:"3m 42s",time:"Today 2:14pm"
 const MOCK_APPTS=[{id:1,name:"Jennifer Walsh",date:"Today 3:00 PM",type:"New Patient — Cleaning",status:"confirmed",phone:"(512) 441-2211"},{id:2,name:"Marcus Kim",date:"Today 4:30 PM",type:"Emergency — Toothache",status:"confirmed",phone:"(512) 773-5521"},{id:3,name:"Priya Patel",date:"Tomorrow 10:00 AM",type:"Follow-up — Filling",status:"pending",phone:"(512) 334-8814"},{id:4,name:"David Chen",date:"Tomorrow 2:00 PM",type:"New Patient — Consult",status:"confirmed",phone:"(512) 226-9982"},{id:5,name:"Sarah Johnson",date:"Jun 6 · 11:00 AM",type:"Cleaning",status:"confirmed",phone:"(512) 889-1140"}];
 const REV=[{m:"Jun",r:12400,c:5},{m:"Jul",r:18200,c:7},{m:"Aug",r:24600,c:10},{m:"Sep",r:29800,c:13},{m:"Oct",r:35400,c:16},{m:"Nov",r:40200,c:19},{m:"Dec",r:44800,c:22},{m:"Jan",r:48200,c:24}];
 const CALLS=Array.from({length:14},(_,i)=>({d:`D${i+17}`,calls:Math.floor(60+Math.random()*100),booked:Math.floor(14+Math.random()*32)}));
-const AUTOS=[{id:1,name:"Lead Trigger → Vapi Sales Call",desc:"Form submit → 45s delay → Vapi outbound call",status:"running",last:"2 min ago",today:47,errors:0},{id:2,name:"Post-Call Processor",desc:"Transcript → Claude analysis → GHL routing",status:"running",last:"4 min ago",today:47,errors:0},{id:3,name:"Monthly ROI Reports",desc:"Vapi stats → format → email clients",status:"running",last:"1d ago",today:0,errors:0},{id:4,name:"Referral Engine",desc:"Day-30 referral ask via GHL",status:"running",last:"12h ago",today:3,errors:0},{id:5,name:"No-Answer Retry (3×)",desc:"Retry at 10am / 2pm / 6pm",status:"warn",last:"1h ago",today:12,errors:2},{id:6,name:"90-Day Reactivation",desc:"Re-engage cold leads",status:"paused",last:"3d ago",today:0,errors:0}];
+const MOCK_PIPELINE=[{name:"cold",value:5},{name:"ai called",value:8},{name:"hot",value:4},{name:"proposal",value:3}];
+const AUTOS=[{id:1,name:"Lead Trigger → Vapi Sales Call",desc:"Form submit → 45s delay → Vapi outbound call",status:"running",last:"2 min ago",today:47,errors:0},{id:2,name:"Post-Call Processor",desc:"Transcript → Claude analysis → GHL routing",status:"running",last:"4 min ago",today:47,errors:0},{id:3,name:"Appointment Reminders",desc:"Hourly cron → 24h reminder emails via Resend",status:"running",last:"1h ago",today:0,errors:0},{id:4,name:"Referral Engine",desc:"Day-30 referral ask via GHL",status:"running",last:"12h ago",today:3,errors:0},{id:5,name:"No-Answer Retry (3×)",desc:"Retry at 10am / 2pm / 6pm",status:"warn",last:"1h ago",today:12,errors:2},{id:6,name:"90-Day Reactivation",desc:"Re-engage cold leads",status:"paused",last:"3d ago",today:0,errors:0}];
 const ADS=[{id:1,plat:"📘 Meta",name:"Dental Offices — Austin",status:"active",spend:18.40,imp:4820,clicks:142,leads:7,cpl:2.63},{id:2,plat:"🔵 Google",name:"AI Receptionist — Phoenix",status:"active",spend:24.10,imp:3210,clicks:198,leads:11,cpl:2.19},{id:3,plat:"💼 LinkedIn",name:"Med Spa Owners — Miami",status:"paused",spend:31.00,imp:1840,clicks:87,leads:5,cpl:6.20},{id:4,plat:"📘 Meta",name:"Law Firms — LA",status:"active",spend:12.80,imp:2940,clicks:109,leads:4,cpl:3.20}];
 
 const ADMIN_NAV=[{group:"Main",items:[{id:"overview",label:"Overview",Icon:LayoutDashboard},{id:"clients",label:"Clients",Icon:Users,badge:24},{id:"pipeline",label:"Lead Pipeline",Icon:GitBranch,badge:8,bdgType:"warn"}]},{group:"Intelligence",items:[{id:"analytics",label:"Analytics",Icon:BarChart3},{id:"agents",label:"AI Agents",Icon:Bot},{id:"automations",label:"Automations",Icon:Zap}]},{group:"Growth",items:[{id:"social",label:"Social Ads",Icon:Megaphone,badge:"NEW",bdgType:"info"}]},{group:"System",items:[{id:"settings",label:"Settings",Icon:Settings}]}];
@@ -223,7 +224,57 @@ const AdminPipeline=()=>{
   );
 };
 
-const AdminAnalytics=()=>(<div className="fade-in"><SH title="Analytics" sub="Revenue & growth intelligence"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}><SC label="Total MRR" value="$48,200" sub="↑10% MoM" trend="up" Icon={DollarSign} color="var(--success)"/><SC label="Avg Retainer" value="$2,008" Icon={TrendingUp} color="var(--accent)"/><SC label="Churn Rate" value="2.1%" Icon={Activity} color="var(--warn)"/><SC label="Client LTV" value="$28,400" Icon={Star} color="var(--accent2)"/></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Monthly Revenue</div><ResponsiveContainer width="100%" height={180}><BarChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Bar dataKey="r" name="Revenue" fill="var(--accent)" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Client Growth</div><ResponsiveContainer width="100%" height={180}><LineChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Line type="monotone" dataKey="c" name="Clients" stroke="var(--accent2)" strokeWidth={2} dot={{fill:"var(--accent2)",r:3}}/></LineChart></ResponsiveContainer></div></div></div>);
+// ─── AdminAnalytics: real data from Supabase ──────────────────
+const AdminAnalytics=()=>{
+  const analytics=useAnalyticsData();
+  const callTrend=analytics?.callTrend??CALLS;
+  const mrr=analytics?.totalMrr??48200;
+  const bookingRate=analytics?.bookingRate??28;
+  const totalCalls=analytics?.totalCalls14d??847;
+  const avgDurSec=analytics?.avgDurSec??185;
+  const avgDurFmt=`${Math.floor(avgDurSec/60)}m ${avgDurSec%60}s`;
+  const pipelineData=analytics?.pipelineData??MOCK_PIPELINE;
+  return(
+    <div className="fade-in">
+      <SH title="Analytics" sub={analytics?"Live from Supabase · Last 14 days":"Loading live data…"}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}>
+        <SC label="Total MRR" value={`$${mrr.toLocaleString()}`} sub={analytics?"Live":"Loading…"} trend={analytics?"up":null} Icon={DollarSign} color="var(--success)"/>
+        <SC label="Booking Rate (14d)" value={`${bookingRate}%`} sub={analytics?`${analytics.booked14d} of ${totalCalls} calls`:"Loading…"} Icon={CheckCircle} color="var(--accent)"/>
+        <SC label="Calls (14d)" value={totalCalls.toLocaleString()} sub={analytics?"Via Vapi":"Loading…"} Icon={PhoneCall} color="var(--accent2)"/>
+        <SC label="Avg Duration" value={avgDurFmt} sub={analytics?"Per call":"Loading…"} Icon={Clock} color="var(--warn)"/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        <div className="card">
+          <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>
+            Call Volume — Last 14 Days{!analytics&&<span style={{marginLeft:8,fontSize:11,color:"var(--t3)"}}>Loading…</span>}
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={callTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
+              <XAxis dataKey="d" tick={{fill:"var(--t3)",fontSize:10}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/>
+              <Tooltip content={<CT/>}/>
+              <Bar dataKey="calls" name="Total Calls" fill="var(--accent)" radius={[3,3,0,0]} opacity={0.7}/>
+              <Bar dataKey="booked" name="Booked" fill="var(--success)" radius={[3,3,0,0]}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="card">
+          <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Lead Pipeline Breakdown</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={pipelineData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
+              <XAxis type="number" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/>
+              <YAxis dataKey="name" type="category" tick={{fill:"var(--t2)",fontSize:11}} axisLine={false} tickLine={false} width={64}/>
+              <Tooltip content={<CT/>}/>
+              <Bar dataKey="value" name="Leads" fill="var(--accent2)" radius={[0,3,3,0]}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminAgents=()=>(<div className="fade-in"><SH title="AI Agents" sub="Real-time health across all client deployments"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:14,marginBottom:24}}><SC label="Total Agents" value="24" Icon={Bot} color="var(--accent)"/><SC label="Healthy" value="22" sub="92% uptime" trend="up" Icon={CheckCircle} color="var(--success)"/><SC label="Warnings" value="2" Icon={AlertCircle} color="var(--warn)"/><SC label="Calls Today" value="847" Icon={PhoneCall} color="var(--accent2)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Client</th><th>Status</th><th>Success Rate</th><th>Avg Duration</th><th>Calls Today</th><th>Errors</th></tr></thead><tbody>{MOCK_CLIENTS.map(c=>{const sr=Math.floor(82+Math.random()*15),ct=Math.floor(8+Math.random()*30),err=c.agent==="warn"?Math.floor(2+Math.random()*4):0;return(<tr key={c.id}><td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td><td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent==="healthy"?"Healthy":"Warning"}</span></td><td><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{flex:1,height:4,background:"var(--border2)",borderRadius:2}}><div style={{height:"100%",width:`${sr}%`,borderRadius:2,background:sr>85?"var(--success)":sr>70?"var(--warn)":"var(--danger)"}}/></div><span style={{fontSize:12,fontWeight:600}}>{sr}%</span></div></td><td>{Math.floor(2+Math.random()*3)}m {Math.floor(10+Math.random()*49)}s</td><td style={{fontWeight:600}}>{ct}</td><td><span style={{color:err>0?"var(--danger)":"var(--success)",fontWeight:600}}>{err}</span></td></tr>);})}</tbody></table></div></div>);
 
