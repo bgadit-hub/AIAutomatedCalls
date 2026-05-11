@@ -1,0 +1,339 @@
+{
+  "name": "AAC — Layer 1: Website Lead → Vapi Sales Call",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-trigger",
+        "responseMode": "immediatelyOnStart",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook — Receive Lead",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "notes": "Receives POST from submit-lead.js (Cloudflare Function).\nPayload: { lead_id, name, phone, business_type, pain_point, email }\nSet this URL as N8N_WEBHOOK_URL in Cloudflare env vars.\nFormat: https://your-n8n.app.n8n.cloud/webhook/lead-trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $request.headers['x-webhook-secret'] }}",
+              "rightValue": "={{ $env.N8N_WEBHOOK_SECRET }}",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "node-verify-secret",
+      "name": "Verify Webhook Secret",
+      "type": "n8n-nodes-base.filter",
+      "position": [460, 300],
+      "notes": "Reject requests without correct x-webhook-secret header.\nSet N8N_WEBHOOK_SECRET as n8n environment variable."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.phone }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            },
+            {
+              "leftValue": "={{ $json.lead_id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ]
+        }
+      },
+      "id": "node-validate",
+      "name": "Validate — Phone + Lead ID Present",
+      "type": "n8n-nodes-base.filter",
+      "position": [680, 300],
+      "notes": "Only proceed if phone and lead_id are present in payload."
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 45
+      },
+      "id": "node-wait",
+      "name": "Wait 45 Seconds",
+      "type": "n8n-nodes-base.wait",
+      "position": [900, 300],
+      "notes": "Give the lead 45 seconds to finish their form submission before calling.\nAdjust if needed — 30-60s is the sweet spot for speed-to-lead."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call/phone",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "phoneNumberId": "={{ $env.VAPI_PHONE_NUMBER_ID }}",
+          "assistantId": "={{ $env.VAPI_SALES_AGENT_ID }}",
+          "customer": {
+            "number": "=+1{{ $('Webhook — Receive Lead').item.json.phone.replace(/\\D/g, '') }}",
+            "name": "={{ $('Webhook — Receive Lead').item.json.name }}"
+          },
+          "metadata": {
+            "lead_id": "={{ $('Webhook — Receive Lead').item.json.lead_id }}",
+            "layer": "layer1",
+            "business_type": "={{ $('Webhook — Receive Lead').item.json.business_type || 'Unknown' }}",
+            "pain_point": "={{ $('Webhook — Receive Lead').item.json.pain_point || '' }}"
+          },
+          "assistantOverrides": {
+            "variableValues": {
+              "prospect_name": "={{ $('Webhook — Receive Lead').item.json.name.split(' ')[0] }}",
+              "business_type": "={{ $('Webhook — Receive Lead').item.json.business_type || 'your business' }}"
+            }
+          }
+        },
+        "options": {}
+      },
+      "id": "node-vapi-call",
+      "name": "Vapi — Create Outbound Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 300],
+      "notes": "Fires the Vapi outbound sales call.\nCredential: HTTP Header Auth → Authorization: Bearer {{VAPI_API_KEY}}\nEnvironment vars needed: VAPI_PHONE_NUMBER_ID, VAPI_SALES_AGENT_ID"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ]
+        }
+      },
+      "id": "node-check-call",
+      "name": "Check — Call Created Successfully",
+      "type": "n8n-nodes-base.if",
+      "position": [1340, 300],
+      "notes": "Vapi returns the call object with an 'id' field on success."
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $('Webhook — Receive Lead').item.json.lead_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "vapi_called": true,
+          "call_status": "calling",
+          "last_called_at": "={{ $now.toISO() }}",
+          "call_attempts": 1
+        },
+        "options": {}
+      },
+      "id": "node-supabase-update",
+      "name": "Supabase — Update Lead Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 200],
+      "notes": "Mark lead as called in Supabase.\nCredential: HTTP Header Auth → apikey: {{SUPABASE_SERVICE_ROLE_KEY}} + Authorization: Bearer {{SUPABASE_SERVICE_ROLE_KEY}}\nEnvironment var: SUPABASE_URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "email": "={{ $('Webhook — Receive Lead').item.json.email }}",
+          "firstName": "={{ $('Webhook — Receive Lead').item.json.name.split(' ')[0] }}",
+          "lastName": "={{ $('Webhook — Receive Lead').item.json.name.split(' ').slice(1).join(' ') }}",
+          "phone": "={{ $('Webhook — Receive Lead').item.json.phone }}",
+          "companyName": "={{ $('Webhook — Receive Lead').item.json.business_type }}",
+          "tags": ["website-lead", "vapi-called"],
+          "customField": {
+            "lead_source": "website-form",
+            "vapi_call_id": "={{ $('Vapi — Create Outbound Call').item.json.id }}",
+            "lead_id": "={{ $('Webhook — Receive Lead').item.json.lead_id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-contact",
+      "name": "GHL — Create Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 340],
+      "notes": "Create contact in GoHighLevel CRM.\nCredential: HTTP Header Auth → Authorization: Bearer {{GHL_API_KEY}}"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $('Webhook — Receive Lead').item.json.lead_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "call_status": "failed",
+          "call_attempts": 1
+        },
+        "options": {}
+      },
+      "id": "node-supabase-fail",
+      "name": "Supabase — Mark Call Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 460],
+      "notes": "If Vapi call creation failed, update lead status so it can be retried."
+    },
+    {
+      "parameters": {
+        "ruleName": "Retry No-Answer Leads",
+        "ruleInterval": "custom",
+        "customInterval": "0 10,14,18 * * *"
+      },
+      "id": "node-retry-cron",
+      "name": "Cron — Retry No-Answer Leads",
+      "type": "n8n-nodes-base.cron",
+      "position": [240, 560],
+      "notes": "Runs at 10am, 2pm, 6pm daily.\nPicks up leads with call_status='no_answer' and call_attempts < 3."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?call_status=eq.no_answer&call_attempts=lt.3&select=id,name,phone,business_type,call_attempts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "node-get-noanswer",
+      "name": "Supabase — Get No-Answer Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 560],
+      "notes": "Get leads that need a retry call. Max 3 attempts total."
+    },
+    {
+      "parameters": { "batchSize": 1, "options": {} },
+      "id": "node-split",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [680, 560]
+    },
+    {
+      "parameters": { "unit": "seconds", "amount": 30 },
+      "id": "node-retry-wait",
+      "name": "Wait 30s Between Retry Calls",
+      "type": "n8n-nodes-base.wait",
+      "position": [900, 560]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call/phone",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "phoneNumberId": "={{ $env.VAPI_PHONE_NUMBER_ID }}",
+          "assistantId": "={{ $env.VAPI_SALES_AGENT_ID }}",
+          "customer": {
+            "number": "=+1{{ $json.phone.replace(/\\D/g, '') }}",
+            "name": "={{ $json.name }}"
+          },
+          "metadata": {
+            "lead_id": "={{ $json.id }}",
+            "layer": "layer1",
+            "is_retry": true
+          }
+        },
+        "options": {}
+      },
+      "id": "node-vapi-retry",
+      "name": "Vapi — Retry Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 560]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "call_status": "calling",
+          "last_called_at": "={{ $now.toISO() }}",
+          "call_attempts": "={{ $('Supabase — Get No-Answer Leads').item.json.call_attempts + 1 }}"
+        },
+        "options": {}
+      },
+      "id": "node-retry-update",
+      "name": "Supabase — Update Retry Attempt",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1340, 560]
+    }
+  ],
+  "connections": {
+    "Webhook — Receive Lead": {
+      "main": [[{ "node": "Verify Webhook Secret", "type": "main", "index": 0 }]]
+    },
+    "Verify Webhook Secret": {
+      "main": [[{ "node": "Validate — Phone + Lead ID Present", "type": "main", "index": 0 }]]
+    },
+    "Validate — Phone + Lead ID Present": {
+      "main": [[{ "node": "Wait 45 Seconds", "type": "main", "index": 0 }]]
+    },
+    "Wait 45 Seconds": {
+      "main": [[{ "node": "Vapi — Create Outbound Call", "type": "main", "index": 0 }]]
+    },
+    "Vapi — Create Outbound Call": {
+      "main": [[{ "node": "Check — Call Created Successfully", "type": "main", "index": 0 }]]
+    },
+    "Check — Call Created Successfully": {
+      "main": [
+        [
+          { "node": "Supabase — Update Lead Status", "type": "main", "index": 0 },
+          { "node": "GHL — Create Contact", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Supabase — Mark Call Failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Cron — Retry No-Answer Leads": {
+      "main": [[{ "node": "Supabase — Get No-Answer Leads", "type": "main", "index": 0 }]]
+    },
+    "Supabase — Get No-Answer Leads": {
+      "main": [[{ "node": "Split Into Batches", "type": "main", "index": 0 }]]
+    },
+    "Split Into Batches": {
+      "main": [[{ "node": "Wait 30s Between Retry Calls", "type": "main", "index": 0 }]]
+    },
+    "Wait 30s Between Retry Calls": {
+      "main": [[{ "node": "Vapi — Retry Call", "type": "main", "index": 0 }]]
+    },
+    "Vapi — Retry Call": {
+      "main": [[{ "node": "Supabase — Update Retry Attempt", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_SETUP_NOTES": {
+    "overview": "Layer 1 self-selling workflow. Website lead submits form → submit-lead.js → this webhook → 45s delay → Vapi outbound call.",
+    "credentials_needed": [
+      "Vapi API key — HTTP Header Auth: Authorization: Bearer {{VAPI_API_KEY}}",
+      "Supabase Service Role Key — HTTP Header Auth: apikey + Authorization: Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+      "GoHighLevel API key — HTTP Header Auth: Authorization: Bearer {{GHL_API_KEY}}"
+    ],
+    "environment_variables": [
+      "VAPI_PHONE_NUMBER_ID — from Vapi dashboard > Phone Numbers",
+      "VAPI_SALES_AGENT_ID — from Vapi dashboard > Assistants",
+      "SUPABASE_URL — https://tkqxwgmkqfusyzrdgacz.supabase.co",
+      "SUPABASE_SERVICE_ROLE_KEY — from Supabase dashboard > Settings > API",
+      "N8N_WEBHOOK_SECRET — random string, must match Cloudflare env var",
+      "GHL_API_KEY — from GoHighLevel > Settings > API Keys"
+    ],
+    "webhook_url": "Copy the webhook URL from n8n after activating — set as N8N_WEBHOOK_URL in Cloudflare Pages env vars",
+    "vapi_phone_format": "Phone numbers must be E.164 format: +1XXXXXXXXXX. The workflow strips non-digits and prepends +1.",
+    "testing": "Use n8n Test Webhook feature. Send: { lead_id: 'test-123', name: 'Test User', phone: '5125551234', business_type: 'Dental practice' } with header x-webhook-secret matching your secret."
+  }
+}
