@@ -1,6 +1,6 @@
 # SCHEMA.md — AI Automated Calls: Complete Database Schema
 
-> Last updated: 2026-05-11
+> Last updated: 2026-05-11 (Session 6)
 > Supabase: `tkqxwgmkqfusyzrdgacz` | us-east-1
 > **Never assume a column exists. Always check here before writing queries.**
 
@@ -20,6 +20,8 @@
 | `call_transcripts` | Full transcripts + AI analysis |
 | `agent_templates` | Industry script templates |
 | `notifications` | In-app + email queue |
+| `availability` | Client weekly availability schedule |
+| `booking_settings` | Per-client booking page configuration |
 
 ---
 
@@ -60,11 +62,10 @@ CREATE TABLE public.clients (
   plan                TEXT NOT NULL DEFAULT 'standard' CHECK (plan IN ('starter','standard','premium')),
   setup_fee_paid      BOOLEAN NOT NULL DEFAULT FALSE,
   monthly_fee         INTEGER,
-  phone_number        TEXT,
-  twilio_number_sid   TEXT,
-  vapi_agent_id       TEXT,
-  calendly_url        TEXT,
-  gcal_refresh_token  TEXT,
+  phone_number        TEXT,           -- Vapi number assigned to this client
+  vapi_number_id      TEXT,           -- Vapi phone number ID
+  vapi_agent_id       TEXT,           -- Vapi agent ID
+  gcal_refresh_token  TEXT,           -- Google Calendar OAuth token (P1)
   ghl_contact_id      TEXT,
   notes               TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -185,14 +186,15 @@ CREATE TABLE public.appointments (
   duration_minutes  INTEGER DEFAULT 30,
   status            TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','confirmed','cancelled','completed','no_show')),
   calendar_event_id TEXT,
-  calendar_source   TEXT CHECK (calendar_source IN ('google','calendly','manual')),
+  calendar_source   TEXT CHECK (calendar_source IN ('native','ical','google','manual')),
+  ical_uid          TEXT,             -- unique ID in the .ics file for updates/cancellations
   confirmation_sent BOOLEAN DEFAULT FALSE,
   reminder_sent     BOOLEAN DEFAULT FALSE,
   notes             TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_appointments_client_id   ON public.appointments(client_id);
+CREATE INDEX idx_appointments_client_id    ON public.appointments(client_id);
 CREATE INDEX idx_appointments_scheduled_at ON public.appointments(scheduled_at);
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "admin all" ON public.appointments FOR ALL USING (
@@ -212,13 +214,14 @@ CREATE TABLE public.agents (
   industry          TEXT NOT NULL,
   use_case          TEXT NOT NULL CHECK (use_case IN (
                       'appointment_booking','lead_qualification','faq_answering','inbound_reception','outbound_followup')),
-  voice_id          TEXT,
+  voice_id          TEXT,             -- ElevenLabs voice ID
+  voice_model       TEXT DEFAULT 'eleven_flash_v2_5',
   greeting_script   TEXT,
   system_prompt     TEXT,
   knowledge_base    TEXT,
   escalation_number TEXT,
   tools_enabled     JSONB,
-  calendar_source   TEXT CHECK (calendar_source IN ('google','calendly','none')),
+  calendar_source   TEXT CHECK (calendar_source IN ('native','google','none')),
   is_active         BOOLEAN NOT NULL DEFAULT FALSE,
   call_count        INTEGER NOT NULL DEFAULT 0,
   total_minutes     NUMERIC(10,2) NOT NULL DEFAULT 0,
@@ -273,6 +276,7 @@ CREATE TABLE public.agent_templates (
   knowledge_base  TEXT,
   tools_enabled   JSONB,
   voice_id        TEXT,
+  voice_model     TEXT DEFAULT 'eleven_flash_v2_5',
   is_active       BOOLEAN DEFAULT TRUE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -308,6 +312,55 @@ CREATE POLICY "admin all" ON public.notifications FOR ALL USING (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notifications TO authenticated;
 ```
 
+## availability
+Per-client weekly availability schedule for native booking system.
+```sql
+CREATE TABLE public.availability (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id    UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  day_of_week  INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Sun, 6=Sat
+  start_time   TIME NOT NULL,
+  end_time     TIME NOT NULL,
+  is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_availability_client_id ON public.availability(client_id);
+ALTER TABLE public.availability ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin all" ON public.availability FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "client own" ON public.availability FOR ALL USING (
+  client_id = (SELECT client_id FROM public.profiles WHERE id = auth.uid()));
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.availability TO authenticated;
+```
+
+## booking_settings
+Per-client booking page configuration.
+```sql
+CREATE TABLE public.booking_settings (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id            UUID NOT NULL UNIQUE REFERENCES public.clients(id) ON DELETE CASCADE,
+  booking_url_slug     TEXT UNIQUE,           -- e.g. "sunrise-dental" → /book/sunrise-dental
+  appointment_types    JSONB,                  -- [{name: "New Patient", duration: 60}, ...]
+  appointment_duration INTEGER NOT NULL DEFAULT 30,   -- default minutes
+  buffer_time          INTEGER NOT NULL DEFAULT 15,   -- minutes between appointments
+  advance_booking_days INTEGER NOT NULL DEFAULT 30,   -- how far ahead bookable
+  min_notice_hours     INTEGER NOT NULL DEFAULT 2,    -- minimum notice required
+  timezone             TEXT NOT NULL DEFAULT 'America/New_York',
+  page_title           TEXT,                  -- e.g. "Book with Sunrise Dental"
+  page_subtitle        TEXT,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.booking_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admin all" ON public.booking_settings FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "client own" ON public.booking_settings FOR ALL USING (
+  client_id = (SELECT client_id FROM public.profiles WHERE id = auth.uid()));
+CREATE POLICY "public read" ON public.booking_settings FOR SELECT USING (TRUE);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_settings TO authenticated;
+```
+
 ---
 
 ## Functions & Triggers
@@ -330,12 +383,14 @@ RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER set_clients_updated_at       BEFORE UPDATE ON public.clients       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER set_leads_updated_at         BEFORE UPDATE ON public.leads         FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER set_calls_updated_at         BEFORE UPDATE ON public.calls         FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER set_agents_updated_at        BEFORE UPDATE ON public.agents        FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER set_appointments_updated_at  BEFORE UPDATE ON public.appointments  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER set_subscriptions_updated_at BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_clients_updated_at         BEFORE UPDATE ON public.clients         FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_leads_updated_at           BEFORE UPDATE ON public.leads           FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_calls_updated_at           BEFORE UPDATE ON public.calls           FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_agents_updated_at          BEFORE UPDATE ON public.agents          FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_appointments_updated_at    BEFORE UPDATE ON public.appointments    FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_subscriptions_updated_at   BEFORE UPDATE ON public.subscriptions   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_availability_updated_at    BEFORE UPDATE ON public.availability    FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER set_booking_settings_updated_at BEFORE UPDATE ON public.booking_settings FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ```
 
 ---
@@ -346,3 +401,20 @@ CREATE TRIGGER set_subscriptions_updated_at BEFORE UPDATE ON public.subscription
 - [ ] RLS policies for admin and client roles
 - [ ] updated_at trigger if applicable
 - [ ] Update this file after migration runs
+
+## Tables Applied vs Pending
+
+| Table | Status |
+|-------|--------|
+| `profiles` | ✅ Applied (Session 2) |
+| `clients` | ✅ Applied (Session 2) |
+| `leads` | ✅ Applied (Session 2) |
+| `calls` | ✅ Applied (Session 2) |
+| `appointments` | ✅ Applied (Session 2) |
+| `agents` | ❌ Pending |
+| `subscriptions` | ❌ Pending |
+| `call_transcripts` | ❌ Pending |
+| `agent_templates` | ❌ Pending |
+| `notifications` | ❌ Pending |
+| `availability` | ❌ Pending (new — Session 6) |
+| `booking_settings` | ❌ Pending (new — Session 6) |
