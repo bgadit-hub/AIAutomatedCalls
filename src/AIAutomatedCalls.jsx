@@ -21,7 +21,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 
-// ─── GLOBAL CSS ──────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 :root {
@@ -42,19 +41,12 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(31,168,160,0.20);border-radius:4px;}
-
-/* ═══════════════════════════════════════════════════════════
-   EnvoyGlobe NAV SYSTEM — adapted for aac- prefix
-   Two separate navs, never both visible. Breakpoint: 767px.
-   ═══════════════════════════════════════════════════════════ */
 .aac-sidebar{will-change:width;transition:width .22s cubic-bezier(.4,0,.2,1);}
 .aac-main{will-change:margin-left;transition:margin-left .22s cubic-bezier(.4,0,.2,1);}
 .aac-sidebar-nav::-webkit-scrollbar{width:3px;}
 .aac-sidebar-nav::-webkit-scrollbar-thumb{background:rgba(31,168,160,0.20);border-radius:2px;}
-/* Mobile elements HIDDEN on desktop by default */
 .aac-mobile-nav{display:none!important;}
 .aac-mobile-spacer{display:none!important;}
-/* ── Mobile overrides ≤767px ── */
 @media(max-width:767px){
   .aac-sidebar{display:none!important;}
   .aac-main{margin-left:0!important;}
@@ -63,7 +55,6 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
   .aac-mobile-nav{display:flex!important;}
   .aac-mobile-spacer{display:block!important;height:62px;flex-shrink:0;}
 }
-
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 @keyframes slideUp{from{opacity:0;transform:translateY(100%);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
@@ -71,7 +62,6 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 .fade-in{animation:fadeIn .28s ease both;}
 .slide-up{animation:slideUp .32s cubic-bezier(.4,0,.2,1) both;}
 .aac-spin{animation:spin .8s linear infinite;}
-
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
 .btn-primary{background:var(--accent);color:#FFFFFF;}.btn-primary:hover{filter:brightness(1.08);}
 .btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--border2);}.btn-ghost:hover{background:var(--bg-hover);color:var(--t1);}
@@ -80,7 +70,7 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 .bdg-warn{background:var(--warn-dim);color:var(--warn);}
 .bdg-danger{background:var(--danger-dim);color:var(--danger);}
 .bdg-info{background:var(--accent-dim);color:var(--accent);}
-.bdg-muted{background:rgba(255,255,255,.05);color:var(--t2);}
+.bdg-muted{background:rgba(0,0,0,.04);color:var(--t2);}
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
 .card-sm{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
 input,select,textarea{background:var(--bg-card2);border:1px solid var(--border2);border-radius:var(--rs);color:var(--t1);font-family:var(--font);font-size:13px;padding:8px 12px;outline:none;width:100%;}
@@ -96,714 +86,82 @@ tr:hover td{background:var(--bg-hover);}
 .tt{background:var(--bg-card2);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--t1);}
 `;
 
-// ─── DATA ────────────────────────────────────────────────────
-const REV = [{m:"Jun",r:12400,c:5},{m:"Jul",r:18200,c:7},{m:"Aug",r:24600,c:10},{m:"Sep",r:29800,c:13},{m:"Oct",r:35400,c:16},{m:"Nov",r:40200,c:19},{m:"Dec",r:44800,c:22},{m:"Jan",r:48200,c:24}];
-const CALLS = Array.from({length:14},(_,i)=>({d:`D${i+17}`,calls:Math.floor(60+Math.random()*100),booked:Math.floor(14+Math.random()*32)}));
+const REV=[{m:"Jun",r:12400,c:5},{m:"Jul",r:18200,c:7},{m:"Aug",r:24600,c:10},{m:"Sep",r:29800,c:13},{m:"Oct",r:35400,c:16},{m:"Nov",r:40200,c:19},{m:"Dec",r:44800,c:22},{m:"Jan",r:48200,c:24}];
+const CALLS=Array.from({length:14},(_,i)=>({d:`D${i+17}`,calls:Math.floor(60+Math.random()*100),booked:Math.floor(14+Math.random()*32)}));
 const CLIENTS=[{id:1,name:"Sunrise Dental",contact:"Dr. Kim Park",tier:"Standard",mrr:2000,calls:312,status:"active",since:"Oct 2024",agent:"healthy",city:"Austin TX"},{id:2,name:"Glow Aesthetics",contact:"Maria Santos",tier:"Premium",mrr:3000,calls:489,status:"active",since:"Nov 2024",agent:"healthy",city:"Miami FL"},{id:3,name:"CoolAir HVAC",contact:"Tom Bradley",tier:"Starter",mrr:1200,calls:187,status:"active",since:"Dec 2024",agent:"healthy",city:"Dallas TX"},{id:4,name:"Rivera Law Firm",contact:"Carlos Rivera",tier:"Standard",mrr:2000,calls:234,status:"active",since:"Nov 2024",agent:"warn",city:"Los Angeles CA"},{id:5,name:"Peak Chiro",contact:"Amy Chen",tier:"Starter",mrr:1200,calls:156,status:"active",since:"Jan 2025",agent:"healthy",city:"Denver CO"},{id:6,name:"LuxDerm Clinic",contact:"Rachel Park",tier:"Premium",mrr:3000,calls:521,status:"active",since:"Sep 2024",agent:"healthy",city:"New York NY"},{id:7,name:"Smith Plumbing",contact:"Bob Smith",tier:"Starter",mrr:1200,calls:98,status:"paused",since:"Dec 2024",agent:"warn",city:"Seattle WA"},{id:8,name:"Realty One Group",contact:"James Wu",tier:"Standard",mrr:2000,calls:267,status:"active",since:"Jan 2025",agent:"healthy",city:"Phoenix AZ"}];
 const LEADS=[{id:1,biz:"Sunrise Dental",name:"Dr. Kim Park",city:"Austin TX",score:92,tier:"Standard",stage:"hot",last:"2h ago"},{id:2,biz:"Realty One",name:"James Wu",city:"Phoenix AZ",score:78,tier:"Premium",stage:"proposal",last:"1d ago"},{id:3,biz:"CoolAir Services",name:"Tom Bradley",city:"Dallas TX",score:65,tier:"Starter",stage:"ai_called",last:"3h ago"},{id:4,biz:"Glow Aesthetics",name:"Maria Santos",city:"Miami FL",score:88,tier:"Standard",stage:"hot",last:"5h ago"},{id:5,biz:"Rivera Law",name:"Carlos Rivera",city:"LA CA",score:45,tier:"Standard",stage:"demo",last:"2d ago"},{id:6,biz:"Peak Performance",name:"Amy Chen",city:"Denver CO",score:71,tier:"Starter",stage:"ai_called",last:"1h ago"},{id:7,biz:"Smith & Sons",name:"Bob Smith",city:"Seattle WA",score:55,tier:"Starter",stage:"cold",last:"4d ago"},{id:8,biz:"LuxDerm",name:"Rachel Park",city:"NYC NY",score:95,tier:"Premium",stage:"won",last:"6h ago"}];
-const RECS=[{id:1,from:"+1 (512) 884-2211",dur:"3m 42s",time:"Today 2:14pm",outcome:"booked",type:"inbound",tx:"[Caller] Hi, I'd like to schedule a cleaning.\n[AI] Of course! What days work best?\n[Caller] Thursday afternoon?\n[AI] Perfect — Thursday the 15th at 3pm. Shall I book that?\n[Caller] Yes please!\n[AI] Done! You'll get a confirmation text. See you Thursday!"},{id:2,from:"+1 (305) 441-9982",dur:"1m 18s",time:"Today 11:32am",outcome:"info",type:"inbound",tx:"[Caller] What are your hours?\n[AI] Monday–Friday 9am–6pm, Saturday 10am–3pm.\n[Caller] Thanks!\n[AI] Have a wonderful day!"},{id:3,from:"+1 (214) 773-5521",dur:"5m 11s",time:"Today 9:05am",outcome:"booked",type:"inbound",tx:"[Caller] Emergency — my AC stopped working!\n[AI] I understand — urgent! Can I get your address?\n[Caller] 1422 Maple Drive.\n[AI] I have a tech at 2pm today. You're confirmed!"},{id:4,from:"+1 (720) 332-8814",dur:"4m 02s",time:"Yesterday 2:20pm",outcome:"booked",type:"outbound",tx:"[AI] Hi! This is Alex from Peak Chiropractic following up on your inquiry.\n[Caller] Yes — my back has been killing me.\n[AI] We have an opening tomorrow at 11am. Want to book it?\n[Caller] Absolutely!\n[AI] You're all set. See you tomorrow!"}];
-const AUTOS=[{id:1,name:"Lead Trigger → AI Sales Call",desc:"Email click → Apollo enrich → Retell dispatch",status:"running",last:"2 min ago",today:47,errors:0},{id:2,name:"Post-Call Processor",desc:"Transcript → Claude analysis → GHL routing",status:"running",last:"4 min ago",today:47,errors:0},{id:3,name:"Monthly ROI Reports",desc:"Retell stats → format → email clients",status:"running",last:"1d ago",today:0,errors:0},{id:4,name:"Referral Engine",desc:"Day-30 referral ask via GHL",status:"running",last:"12h ago",today:3,errors:0},{id:5,name:"No-Answer Retry (3×)",desc:"Retry at 10am / 2pm / 6pm",status:"warn",last:"1h ago",today:12,errors:2},{id:6,name:"90-Day Reactivation",desc:"Re-engage cold leads",status:"paused",last:"3d ago",today:0,errors:0}];
+const RECS=[{id:1,from:"+1 (512) 884-2211",dur:"3m 42s",time:"Today 2:14pm",outcome:"booked",type:"inbound",tx:"[Caller] Hi, I'd like to schedule a cleaning.\n[AI] Of course! What days work best?\n[Caller] Thursday afternoon?\n[AI] Perfect — Thursday the 15th at 3pm. Shall I book that?\n[Caller] Yes please!\n[AI] Done! You'll get a confirmation text. See you Thursday!"},{id:2,from:"+1 (305) 441-9982",dur:"1m 18s",time:"Today 11:32am",outcome:"info",type:"inbound",tx:"[Caller] What are your hours?\n[AI] Monday–Friday 9am–6pm, Saturday 10am–3pm.\n[Caller] Thanks!\n[AI] Have a wonderful day!"},{id:3,from:"+1 (214) 773-5521",dur:"5m 11s",time:"Today 9:05am",outcome:"booked",type:"inbound",tx:"[Caller] Emergency — my AC stopped working!\n[AI] I understand — urgent! Can I get your address?\n[Caller] 1422 Maple Drive.\n[AI] I have a tech at 2pm today. You're confirmed!"},{id:4,from:"+1 (720) 332-8814",dur:"4m 02s",time:"Yesterday 2:20pm",outcome:"booked",type:"outbound",tx:"[AI] Hi! This is Alex from Peak Chiro following up.\n[Caller] Yes — my back has been bad.\n[AI] We have an opening tomorrow at 11am. Want to book it?\n[Caller] Absolutely!\n[AI] You're all set. See you tomorrow!"}];
+const AUTOS=[{id:1,name:"Lead Trigger → Vapi Sales Call",desc:"Form submit → 45s delay → Vapi outbound call",status:"running",last:"2 min ago",today:47,errors:0},{id:2,name:"Post-Call Processor",desc:"Transcript → Claude analysis → GHL routing",status:"running",last:"4 min ago",today:47,errors:0},{id:3,name:"Monthly ROI Reports",desc:"Vapi stats → format → email clients",status:"running",last:"1d ago",today:0,errors:0},{id:4,name:"Referral Engine",desc:"Day-30 referral ask via GHL",status:"running",last:"12h ago",today:3,errors:0},{id:5,name:"No-Answer Retry (3×)",desc:"Retry at 10am / 2pm / 6pm",status:"warn",last:"1h ago",today:12,errors:2},{id:6,name:"90-Day Reactivation",desc:"Re-engage cold leads",status:"paused",last:"3d ago",today:0,errors:0}];
 const ADS=[{id:1,plat:"📘 Meta",name:"Dental Offices — Austin",status:"active",spend:18.40,imp:4820,clicks:142,leads:7,cpl:2.63},{id:2,plat:"🔵 Google",name:"AI Receptionist — Phoenix",status:"active",spend:24.10,imp:3210,clicks:198,leads:11,cpl:2.19},{id:3,plat:"💼 LinkedIn",name:"Med Spa Owners — Miami",status:"paused",spend:31.00,imp:1840,clicks:87,leads:5,cpl:6.20},{id:4,plat:"📘 Meta",name:"Law Firms — LA",status:"active",spend:12.80,imp:2940,clicks:109,leads:4,cpl:3.20}];
 
-// ─── NAV CONFIG ──────────────────────────────────────────────
 const ADMIN_NAV=[{group:"Main",items:[{id:"overview",label:"Overview",Icon:LayoutDashboard},{id:"clients",label:"Clients",Icon:Users,badge:24},{id:"pipeline",label:"Lead Pipeline",Icon:GitBranch,badge:8,bdgType:"warn"}]},{group:"Intelligence",items:[{id:"analytics",label:"Analytics",Icon:BarChart3},{id:"agents",label:"AI Agents",Icon:Bot},{id:"automations",label:"Automations",Icon:Zap}]},{group:"Growth",items:[{id:"social",label:"Social Ads",Icon:Megaphone,badge:"NEW",bdgType:"info"}]},{group:"System",items:[{id:"settings",label:"Settings",Icon:Settings}]}];
 const CLIENT_NAV=[{group:"Main",items:[{id:"cdash",label:"Dashboard",Icon:LayoutDashboard},{id:"recordings",label:"Call Recordings",Icon:Mic,badge:312},{id:"appointments",label:"Appointments",Icon:Calendar}]},{group:"Account",items:[{id:"billing",label:"Billing",Icon:CreditCard},{id:"csettings",label:"Settings",Icon:Settings}]}];
 const A_PRI=["overview","clients","analytics","social"];
 const C_PRI=["cdash","recordings","appointments","billing"];
 
-// ─── PRIMITIVES ──────────────────────────────────────────────
 const Bdg=({type="muted",ch})=><span className={`badge bdg-${type}`}>{ch}</span>;
 const Dot=({c})=><span style={{width:7,height:7,borderRadius:"50%",background:c,display:"inline-block",flexShrink:0}}/>;
 const CT=({active,payload,label})=>active&&payload?.length?(<div className="tt"><div style={{color:"var(--t3)",marginBottom:4,fontSize:11}}>{label}</div>{payload.map((p,i)=><div key={i} style={{color:p.color||"var(--accent)",fontWeight:600,fontSize:12}}>{p.name}: {p.name?.toLowerCase().includes("r")?`$${p.value?.toLocaleString()}`:p.value}</div>)}</div>):null;
+const SC=({label,value,sub,trend,Icon,color="var(--accent)"})=>(<div className="card fade-in" style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{label}</span>{Icon&&<div style={{width:32,height:32,borderRadius:8,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon size={15} color={color}/></div>}</div><div><div style={{fontSize:26,fontWeight:700,letterSpacing:"-.02em",color:"var(--t1)"}}>{value}</div>{sub&&<div style={{fontSize:12,marginTop:4,display:"flex",alignItems:"center",gap:4,color:trend==="up"?"var(--success)":trend==="dn"?"var(--danger)":"var(--t3)"}}>{trend==="up"&&<ArrowUpRight size={11}/>}{sub}</div>}</div></div>);
+const SH=({title,sub,action})=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h2 style={{fontSize:17,fontWeight:700,color:"var(--t1)"}}>{title}</h2>{sub&&<p style={{fontSize:13,color:"var(--t2)",marginTop:3}}>{sub}</p>}</div>{action}</div>);
 
-const SC=({label,value,sub,trend,Icon,color="var(--accent)"})=>(
-  <div className="card fade-in" style={{display:"flex",flexDirection:"column",gap:12}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-      <span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{label}</span>
-      {Icon&&<div style={{width:32,height:32,borderRadius:8,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon size={15} color={color}/></div>}
-    </div>
-    <div>
-      <div style={{fontSize:26,fontWeight:700,letterSpacing:"-.02em",color:"var(--t1)"}}>{value}</div>
-      {sub&&<div style={{fontSize:12,marginTop:4,display:"flex",alignItems:"center",gap:4,color:trend==="up"?"var(--success)":trend==="dn"?"var(--danger)":"var(--t3)"}}>{trend==="up"&&<ArrowUpRight size={11}/>}{sub}</div>}
-    </div>
-  </div>
-);
+const Sidebar=({col,setCol,page,setPage,role})=>{const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;return(<aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}><div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>{col?<img src={logoIcon} alt="logo" style={{width:32,height:32,objectFit:"contain"}}/>:<img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>}</div><nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>{nav.map(g=>(<div key={g.group} style={{marginBottom:2}}>{!col&&<div style={{fontSize:10,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:".08em",padding:"8px 20px 4px"}}>{g.group}</div>}{g.items.map(item=>{const active=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}><item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>{!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}{col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}</button>);})}</div>))}</nav>{!col&&<div style={{padding:"12px 16px",borderTop:"1px solid var(--border)"}}><div style={{background:"var(--bg-card2)",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:6,background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><Shield size={13} color="var(--accent)"/></div><div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{role==="admin"?"Agency Admin":"Sunrise Dental"}</div><div style={{fontSize:11,color:"var(--t3)"}}>{role==="admin"?"aiautomatedcalls.com":"Client portal"}</div></div></div></div>}<button onClick={()=>setCol(c=>!c)} style={{height:40,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderTop:"1px solid var(--border)",cursor:"pointer",color:"var(--t3)",flexShrink:0}} title={col?"Expand":"Collapse"}>{col?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}</button></aside>);};
 
-const SH=({title,sub,action})=>(
-  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
-    <div><h2 style={{fontSize:17,fontWeight:700,color:"var(--t1)"}}>{title}</h2>{sub&&<p style={{fontSize:13,color:"var(--t2)",marginTop:3}}>{sub}</p>}</div>
-    {action}
-  </div>
-);
+const MobileNav=({page,setPage,role})=>{const [sheet,setSheet]=useState(false);const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;const pids=role==="admin"?A_PRI:C_PRI;const all=nav.flatMap(g=>g.items);const primary=pids.map(id=>all.find(i=>i.id===id)).filter(Boolean);const more=all.filter(i=>!pids.includes(i.id));return(<><div className="aac-mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg-sidebar)",borderTop:"1px solid var(--border)",alignItems:"center",justifyContent:"space-around",height:62,zIndex:50,paddingBottom:"env(safe-area-inset-bottom)"}}>{primary.map(item=>{const a=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}><item.Icon size={20} color={a?"var(--accent)":"var(--t3)"}/><span style={{fontSize:10,fontWeight:a?600:400,color:a?"var(--accent)":"var(--t3)"}}>{item.label.split(" ")[0]}</span></button>);})}<button onClick={()=>setSheet(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}><MoreHorizontal size={20} color="var(--t3)"/><span style={{fontSize:10,color:"var(--t3)"}}>More</span></button></div>{sheet&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:100}} onClick={()=>setSheet(false)}><div className="slide-up" onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:0,right:0,background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 48px",borderTop:"1px solid var(--border2)"}}><div style={{width:36,height:4,borderRadius:2,background:"var(--border2)",margin:"0 auto 20px"}}/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{more.map(item=>{const a=page===item.id;return(<button key={item.id} onClick={()=>{setPage(item.id);setSheet(false);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:a?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${a?"var(--accent)":"var(--border)"}`,borderRadius:10,cursor:"pointer"}}><item.Icon size={16} color={a?"var(--accent)":"var(--t2)"}/><span style={{fontSize:13,color:a?"var(--t1)":"var(--t2)",fontWeight:a?600:400}}>{item.label}</span></button>);})}</div></div></div>)}</>);};
 
-// ─── SIDEBAR ─────────────────────────────────────────────────
-const Sidebar=({col,setCol,page,setPage,role})=>{
-  const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;
-  return(
-    <aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}>
-      {/* Logo */}
-      <div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-        {col
-          ? <img src={logoIcon} alt="AI Automated Calls" style={{width:32,height:32,objectFit:"contain"}}/>
-          : <img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>
-        }
-      </div>
-      {/* Nav */}
-      <nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>
-        {nav.map(g=>(
-          <div key={g.group} style={{marginBottom:2}}>
-            {!col&&<div style={{fontSize:10,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:".08em",padding:"8px 20px 4px"}}>{g.group}</div>}
-            {g.items.map(item=>{
-              const active=page===item.id;
-              return(
-                <button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined}
-                  style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}>
-                  <item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>
-                  {!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}
-                  {col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-      {/* User pill */}
-      {!col&&<div style={{padding:"12px 16px",borderTop:"1px solid var(--border)"}}>
-        <div style={{background:"var(--bg-card2)",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:28,height:28,borderRadius:6,background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><Shield size={13} color="var(--accent)"/></div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:12,fontWeight:600,color:"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{role==="admin"?"Agency Admin":"Sunrise Dental"}</div>
-            <div style={{fontSize:11,color:"var(--t3)"}}>{role==="admin"?"aiautomatedcalls.com":"Client portal"}</div>
-          </div>
-        </div>
-      </div>}
-      {/* Collapse toggle */}
-      <button onClick={()=>setCol(c=>!c)} style={{height:40,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderTop:"1px solid var(--border)",cursor:"pointer",color:"var(--t3)",flexShrink:0}} title={col?"Expand":"Collapse"}>
-        {col?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}
-      </button>
-    </aside>
-  );
-};
+const TopBar=({page,role,onSwitch})=>{const all=[...ADMIN_NAV,...CLIENT_NAV].flatMap(g=>g.items);const cur=all.find(i=>i.id===page);return(<div className="aac-topbar" style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid var(--border)",position:"sticky",top:0,zIndex:40}}><div style={{display:"flex",alignItems:"center",gap:10}}>{cur?.Icon&&<cur.Icon size={15} color="var(--t3)"/>}<span style={{fontSize:14,fontWeight:600,color:"var(--t1)"}}>{cur?.label||"Dashboard"}</span>{role==="admin"&&<span className="badge bdg-muted">Admin</span>}</div><div style={{display:"flex",alignItems:"center",gap:8}}><button className="btn btn-ghost" onClick={onSwitch} style={{fontSize:11,padding:"5px 10px"}}><Layers size={12}/>Switch to {role==="admin"?"Client":"Admin"}</button><div style={{width:1,height:18,background:"var(--border)"}}/><button style={{width:32,height:32,borderRadius:8,background:"var(--bg-card2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}><Bell size={14} color="var(--t2)"/><span style={{position:"absolute",top:5,right:5,width:7,height:7,borderRadius:"50%",background:"var(--danger)"}}/></button><div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:12,fontWeight:700,color:"#fff"}}>{role==="admin"?"A":"S"}</span></div></div></div>);};
 
-// ─── MOBILE NAV ──────────────────────────────────────────────
-const MobileNav=({page,setPage,role})=>{
-  const [sheet,setSheet]=useState(false);
-  const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;
-  const pids=role==="admin"?A_PRI:C_PRI;
-  const all=nav.flatMap(g=>g.items);
-  const primary=pids.map(id=>all.find(i=>i.id===id)).filter(Boolean);
-  const more=all.filter(i=>!pids.includes(i.id));
-  return(<>
-    <div className="aac-mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg-sidebar)",borderTop:"1px solid var(--border)",alignItems:"center",justifyContent:"space-around",height:62,zIndex:50,paddingBottom:"env(safe-area-inset-bottom)"}}>
-      {primary.map(item=>{const a=page===item.id;return(
-        <button key={item.id} onClick={()=>setPage(item.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}>
-          <item.Icon size={20} color={a?"var(--accent)":"var(--t3)"}/>
-          <span style={{fontSize:10,fontWeight:a?600:400,color:a?"var(--accent)":"var(--t3)"}}>{item.label.split(" ")[0]}</span>
-        </button>
-      );})}
-      <button onClick={()=>setSheet(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}>
-        <MoreHorizontal size={20} color="var(--t3)"/><span style={{fontSize:10,color:"var(--t3)"}}>More</span>
-      </button>
-    </div>
-    {sheet&&(
-      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:100}} onClick={()=>setSheet(false)}>
-        <div className="slide-up" onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:0,right:0,background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 48px",borderTop:"1px solid var(--border2)"}}>
-          <div style={{width:36,height:4,borderRadius:2,background:"var(--border2)",margin:"0 auto 20px"}}/>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {more.map(item=>{const a=page===item.id;return(
-              <button key={item.id} onClick={()=>{setPage(item.id);setSheet(false);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:a?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${a?"var(--accent)":"var(--border)"}`,borderRadius:10,cursor:"pointer"}}>
-                <item.Icon size={16} color={a?"var(--accent)":"var(--t2)"}/>
-                <span style={{fontSize:13,color:a?"var(--t1)":"var(--t2)",fontWeight:a?600:400}}>{item.label}</span>
-              </button>
-            );})}
-          </div>
-        </div>
-      </div>
-    )}
-  </>);
-};
+const AdminOverview=()=>(<div className="fade-in"><SH title="Agency Overview" sub="All systems operational · aiautomatedcalls.com" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:14,marginBottom:24}}><SC label="Active Clients" value="24" sub="↑2 this month" trend="up" Icon={Users} color="var(--accent)"/><SC label="Monthly Revenue" value="$48,200" sub="↑$4,400 MoM" trend="up" Icon={DollarSign} color="var(--success)"/><SC label="Calls Today" value="847" sub="↑12% vs yesterday" trend="up" Icon={PhoneCall} color="var(--accent2)"/><SC label="Leads in Pipeline" value="31" sub="8 hot leads" Icon={GitBranch} color="var(--warn)"/></div><div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:24}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Revenue Growth</div><ResponsiveContainer width="100%" height={180}><AreaChart data={REV}><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#1FA8A0" stopOpacity={0.2}/><stop offset="95%" stopColor="#1FA8A0" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Area type="monotone" dataKey="r" name="Revenue" stroke="var(--accent)" fill="url(#rg)" strokeWidth={2}/></AreaChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:12}}>Client Mix</div><ResponsiveContainer width="100%" height={110}><PieChart><Pie data={[{name:"Standard",value:10},{name:"Premium",value:8},{name:"Starter",value:6}]} cx="50%" cy="50%" innerRadius={28} outerRadius={48} dataKey="value"><Cell fill="var(--accent)"/><Cell fill="var(--accent2)"/><Cell fill="var(--t3)"/></Pie><Tooltip content={<CT/>}/></PieChart></ResponsiveContainer>{[["Standard","var(--accent)",10],["Premium","var(--accent2)",8],["Starter","var(--t3)",6]].map(([l,c,v])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}><div style={{display:"flex",alignItems:"center",gap:6}}><Dot c={c}/><span style={{fontSize:12,color:"var(--t2)"}}>{l}</span></div><span style={{fontSize:12,fontWeight:600}}>{v}</span></div>))}</div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Recent Clients</div><table><thead><tr><th>Client</th><th>Tier</th><th>MRR</th><th>Status</th><th>Agent</th></tr></thead><tbody>{CLIENTS.slice(0,5).map(c=>(<tr key={c.id}><td><div style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td><td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td><td style={{fontWeight:600,color:"var(--t1)"}}>${c.mrr.toLocaleString()}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td><td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td></tr>))}</tbody></table></div></div>);
 
-// ─── TOPBAR ──────────────────────────────────────────────────
-const TopBar=({page,role,onSwitch})=>{
-  const all=[...ADMIN_NAV,...CLIENT_NAV].flatMap(g=>g.items);
-  const cur=all.find(i=>i.id===page);
-  return(
-    <div className="aac-topbar" style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",background:"rgba(4,7,15,.85)",backdropFilter:"blur(12px)",borderBottom:"1px solid var(--border)",position:"sticky",top:0,zIndex:40}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {cur?.Icon&&<cur.Icon size={15} color="var(--t3)"/>}
-        <span style={{fontSize:14,fontWeight:600,color:"var(--t1)"}}>{cur?.label||"Dashboard"}</span>
-        {role==="admin"&&<span className="badge bdg-muted">Admin</span>}
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <button className="btn btn-ghost" onClick={onSwitch} style={{fontSize:11,padding:"5px 10px"}}>
-          <Layers size={12}/>Switch to {role==="admin"?"Client":"Admin"}
-        </button>
-        <div style={{width:1,height:18,background:"var(--border)"}}/>
-        <button style={{width:32,height:32,borderRadius:8,background:"var(--bg-card2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}>
-          <Bell size={14} color="var(--t2)"/>
-          <span style={{position:"absolute",top:5,right:5,width:7,height:7,borderRadius:"50%",background:"var(--danger)"}}/>
-        </button>
-        <div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontSize:12,fontWeight:700,color:"#00111f"}}>{role==="admin"?"A":"S"}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+const AdminClients=()=>{const [q,setQ]=useState("");const list=CLIENTS.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.contact.toLowerCase().includes(q.toLowerCase()));return(<div className="fade-in"><SH title="Clients" sub={`${CLIENTS.length} active relationships`} action={<button className="btn btn-primary"><Plus size={13}/>Add Client</button>}/><div className="card" style={{marginBottom:16}}><div style={{display:"flex",gap:10}}><input placeholder="Search clients…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:1}}/><button className="btn btn-ghost"><Filter size={13}/>Filter</button><button className="btn btn-ghost"><Download size={13}/>Export</button></div></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Business</th><th>Tier</th><th>MRR</th><th>Calls/Mo</th><th>Status</th><th>Agent</th><th>Since</th></tr></thead><tbody>{list.map(c=>(<tr key={c.id}><td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.contact} · {c.city}</div></td><td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td><td style={{fontWeight:700,color:"var(--t1)"}}>${c.mrr.toLocaleString()}</td><td>{c.calls.toLocaleString()}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td><td><Dot c={c.agent==="healthy"?"var(--success)":c.agent==="warn"?"var(--warn)":"var(--danger)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td><td style={{color:"var(--t3)",fontSize:12}}>{c.since}</td></tr>))}</tbody></table></div></div>);};
 
-// ════════════════════════════════
-//  ADMIN PAGES
-// ════════════════════════════════
+const AdminPipeline=()=>{const STAGES=[{id:"cold",label:"Cold",c:"var(--t3)"},{id:"demo",label:"Demo Watched",c:"var(--accent2)"},{id:"ai_called",label:"AI Called",c:"var(--accent)"},{id:"hot",label:"Hot 🔥",c:"var(--warn)"},{id:"proposal",label:"Proposal",c:"var(--success)"},{id:"won",label:"Won ✓",c:"var(--success)"}];const [leads,setLeads]=useState(LEADS);const move=(id,dir)=>{const ids=STAGES.map(s=>s.id);setLeads(ls=>ls.map(l=>{if(l.id!==id)return l;const ci=ids.indexOf(l.stage);const ni=ci+dir;if(ni<0||ni>=ids.length)return l;return{...l,stage:ids[ni]};}));};return(<div className="fade-in"><SH title="Lead Pipeline" sub="AI-driven funnel · Click arrows to advance leads" action={<button className="btn btn-primary"><Plus size={13}/>Add Lead</button>}/><div style={{overflowX:"auto",paddingBottom:8}}><div style={{display:"flex",gap:12,minWidth:940}}>{STAGES.map((s,si)=>{const sl=leads.filter(l=>l.stage===s.id);return(<div key={s.id} style={{flex:"0 0 190px"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><span style={{fontSize:12,fontWeight:600,color:s.c}}>{s.label}</span><span style={{fontSize:11,color:"var(--t3)",background:"var(--bg-card2)",padding:"1px 7px",borderRadius:10}}>{sl.length}</span></div><div style={{display:"flex",flexDirection:"column",gap:8}}>{sl.map(l=>(<div key={l.id} className="card-sm"><div style={{fontWeight:600,fontSize:13,color:"var(--t1)",marginBottom:2}}>{l.biz}</div><div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.name} · {l.city}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><Bdg type={l.tier==="Premium"?"info":l.tier==="Standard"?"success":"muted"} ch={l.tier}/><span style={{fontSize:11,color:"var(--t3)"}}>Score: <b style={{color:l.score>80?"var(--success)":l.score>60?"var(--warn)":"var(--t2)"}}>{l.score}</b></span></div><div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.last}</div><div style={{display:"flex",gap:4}}>{si>0&&<button className="btn btn-ghost" onClick={()=>move(l.id,-1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>←</button>}{si<STAGES.length-1&&<button className="btn btn-primary" onClick={()=>move(l.id,1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>→</button>}</div></div>))}</div></div>);})}</div></div></div>);};
 
-const AdminOverview=()=>(
-  <div className="fade-in">
-    <SH title="Agency Overview" sub="All systems operational · aiautomatedcalls.com" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:14,marginBottom:24}}>
-      <SC label="Active Clients" value="24" sub="↑2 this month" trend="up" Icon={Users} color="var(--accent)"/>
-      <SC label="Monthly Revenue" value="$48,200" sub="↑$4,400 MoM" trend="up" Icon={DollarSign} color="var(--success)"/>
-      <SC label="Calls Today" value="847" sub="↑12% vs yesterday" trend="up" Icon={PhoneCall} color="var(--accent2)"/>
-      <SC label="Leads in Pipeline" value="31" sub="8 hot leads" Icon={GitBranch} color="var(--warn)"/>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:24}}>
-      <div className="card">
-        <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Revenue Growth</div>
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={REV}>
-            <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2}/><stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/></linearGradient></defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/>
-            <XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/>
-            <YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/>
-            <Tooltip content={<CT/>}/>
-            <Area type="monotone" dataKey="r" name="Revenue" stroke="var(--accent)" fill="url(#rg)" strokeWidth={2}/>
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="card">
-        <div style={{fontSize:14,fontWeight:600,marginBottom:12}}>Client Mix</div>
-        <ResponsiveContainer width="100%" height={110}>
-          <PieChart><Pie data={[{name:"Standard",value:10},{name:"Premium",value:8},{name:"Starter",value:6}]} cx="50%" cy="50%" innerRadius={28} outerRadius={48} dataKey="value"><Cell fill="var(--accent)"/><Cell fill="var(--accent2)"/><Cell fill="var(--t3)"/></Pie><Tooltip content={<CT/>}/></PieChart>
-        </ResponsiveContainer>
-        {[["Standard","var(--accent)",10],["Premium","var(--accent2)",8],["Starter","var(--t3)",6]].map(([l,c,v])=>(
-          <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}><Dot c={c}/><span style={{fontSize:12,color:"var(--t2)"}}>{l}</span></div>
-            <span style={{fontSize:12,fontWeight:600}}>{v}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-    <div className="card" style={{padding:0,overflow:"hidden"}}>
-      <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Recent Clients</div>
-      <table><thead><tr><th>Client</th><th>Tier</th><th>MRR</th><th>Status</th><th>Agent</th></tr></thead>
-        <tbody>{CLIENTS.slice(0,5).map(c=>(
-          <tr key={c.id}>
-            <td><div style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td>
-            <td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td>
-            <td style={{fontWeight:600,color:"var(--t1)"}}>${c.mrr.toLocaleString()}</td>
-            <td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td>
-            <td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td>
-          </tr>
-        ))}</tbody>
-      </table>
-    </div>
-  </div>
-);
+const AdminAnalytics=()=>(<div className="fade-in"><SH title="Analytics" sub="Revenue & growth intelligence"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}><SC label="Total MRR" value="$48,200" sub="↑10% MoM" trend="up" Icon={DollarSign} color="var(--success)"/><SC label="Avg Retainer" value="$2,008" Icon={TrendingUp} color="var(--accent)"/><SC label="Churn Rate" value="2.1%" Icon={Activity} color="var(--warn)"/><SC label="Client LTV" value="$28,400" Icon={Star} color="var(--accent2)"/></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Monthly Revenue</div><ResponsiveContainer width="100%" height={180}><BarChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Bar dataKey="r" name="Revenue" fill="var(--accent)" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Client Growth</div><ResponsiveContainer width="100%" height={180}><LineChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Line type="monotone" dataKey="c" name="Clients" stroke="var(--accent2)" strokeWidth={2} dot={{fill:"var(--accent2)",r:3}}/></LineChart></ResponsiveContainer></div></div></div>);
 
-const AdminClients=()=>{
-  const [q,setQ]=useState("");
-  const list=CLIENTS.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.contact.toLowerCase().includes(q.toLowerCase()));
-  return(
-    <div className="fade-in">
-      <SH title="Clients" sub={`${CLIENTS.length} active relationships`} action={<button className="btn btn-primary"><Plus size={13}/>Add Client</button>}/>
-      <div className="card" style={{marginBottom:16}}><div style={{display:"flex",gap:10}}><input placeholder="Search clients…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:1}}/><button className="btn btn-ghost"><Filter size={13}/>Filter</button><button className="btn btn-ghost"><Download size={13}/>Export</button></div></div>
-      <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <table><thead><tr><th>Business</th><th>Tier</th><th>MRR</th><th>Calls/Mo</th><th>Status</th><th>Agent</th><th>Since</th></tr></thead>
-          <tbody>{list.map(c=>(
-            <tr key={c.id}>
-              <td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.contact} · {c.city}</div></td>
-              <td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td>
-              <td style={{fontWeight:700,color:"var(--t1)"}}>${c.mrr.toLocaleString()}</td>
-              <td>{c.calls.toLocaleString()}</td>
-              <td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td>
-              <td><Dot c={c.agent==="healthy"?"var(--success)":c.agent==="warn"?"var(--warn)":"var(--danger)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td>
-              <td style={{color:"var(--t3)",fontSize:12}}>{c.since}</td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+const AdminAgents=()=>(<div className="fade-in"><SH title="AI Agents" sub="Real-time health across all client deployments"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:14,marginBottom:24}}><SC label="Total Agents" value="24" Icon={Bot} color="var(--accent)"/><SC label="Healthy" value="22" sub="92% uptime" trend="up" Icon={CheckCircle} color="var(--success)"/><SC label="Warnings" value="2" Icon={AlertCircle} color="var(--warn)"/><SC label="Calls Today" value="847" Icon={PhoneCall} color="var(--accent2)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Client</th><th>Status</th><th>Success Rate</th><th>Avg Duration</th><th>Calls Today</th><th>Errors</th></tr></thead><tbody>{CLIENTS.map(c=>{const sr=Math.floor(82+Math.random()*15),ct=Math.floor(8+Math.random()*30),err=c.agent==="warn"?Math.floor(2+Math.random()*4):0;return(<tr key={c.id}><td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td><td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent==="healthy"?"Healthy":"Warning"}</span></td><td><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{flex:1,height:4,background:"var(--border2)",borderRadius:2}}><div style={{height:"100%",width:`${sr}%`,borderRadius:2,background:sr>85?"var(--success)":sr>70?"var(--warn)":"var(--danger)"}}/></div><span style={{fontSize:12,fontWeight:600}}>{sr}%</span></div></td><td>{Math.floor(2+Math.random()*3)}m {Math.floor(10+Math.random()*49)}s</td><td style={{fontWeight:600}}>{ct}</td><td><span style={{color:err>0?"var(--danger)":"var(--success)",fontWeight:600}}>{err}</span></td></tr>);})}</tbody></table></div></div>);
 
-const AdminPipeline=()=>{
-  const STAGES=[{id:"cold",label:"Cold",c:"var(--t3)"},{id:"demo",label:"Demo Watched",c:"var(--accent2)"},{id:"ai_called",label:"AI Called",c:"var(--accent)"},{id:"hot",label:"Hot 🔥",c:"var(--warn)"},{id:"proposal",label:"Proposal",c:"var(--success)"},{id:"won",label:"Won ✓",c:"var(--success)"}];
-  const [leads,setLeads]=useState(LEADS);
-  const move=(id,dir)=>{const ids=STAGES.map(s=>s.id);setLeads(ls=>ls.map(l=>{if(l.id!==id)return l;const ci=ids.indexOf(l.stage);const ni=ci+dir;if(ni<0||ni>=ids.length)return l;return{...l,stage:ids[ni]};}));};
-  return(
-    <div className="fade-in">
-      <SH title="Lead Pipeline" sub="AI-driven funnel · Click arrows to advance leads" action={<button className="btn btn-primary"><Plus size={13}/>Add Lead</button>}/>
-      <div style={{overflowX:"auto",paddingBottom:8}}>
-        <div style={{display:"flex",gap:12,minWidth:940}}>
-          {STAGES.map((s,si)=>{
-            const sl=leads.filter(l=>l.stage===s.id);
-            return(
-              <div key={s.id} style={{flex:"0 0 190px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
-                  <span style={{fontSize:12,fontWeight:600,color:s.c}}>{s.label}</span>
-                  <span style={{fontSize:11,color:"var(--t3)",background:"var(--bg-card2)",padding:"1px 7px",borderRadius:10}}>{sl.length}</span>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {sl.map(l=>(
-                    <div key={l.id} className="card-sm">
-                      <div style={{fontWeight:600,fontSize:13,color:"var(--t1)",marginBottom:2}}>{l.biz}</div>
-                      <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.name} · {l.city}</div>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                        <Bdg type={l.tier==="Premium"?"info":l.tier==="Standard"?"success":"muted"} ch={l.tier}/>
-                        <span style={{fontSize:11,color:"var(--t3)"}}>Score: <b style={{color:l.score>80?"var(--success)":l.score>60?"var(--warn)":"var(--t2)"}}>{l.score}</b></span>
-                      </div>
-                      <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.last}</div>
-                      <div style={{display:"flex",gap:4}}>
-                        {si>0&&<button className="btn btn-ghost" onClick={()=>move(l.id,-1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>←</button>}
-                        {si<STAGES.length-1&&<button className="btn btn-primary" onClick={()=>move(l.id,1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>→</button>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
+const AdminAutomations=()=>(<div className="fade-in"><SH title="Automations" sub="n8n workflow status monitor" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/><div style={{display:"grid",gap:12}}>{AUTOS.map(a=>{const SI=a.status==="running"?Zap:a.status==="warn"?AlertCircle:Clock;return(<div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}><div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:a.status==="running"?"var(--success-dim)":a.status==="warn"?"var(--warn-dim)":"var(--bg-card2)",display:"flex",alignItems:"center",justifyContent:"center"}}><SI size={18} color={a.status==="running"?"var(--success)":a.status==="warn"?"var(--warn)":"var(--t3)"}/></div><div style={{flex:1,minWidth:140}}><div style={{fontWeight:600,fontSize:14,color:"var(--t1)"}}>{a.name}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{a.desc}</div></div><div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}><div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700}}>{a.today}</div><div style={{fontSize:11,color:"var(--t3)"}}>Today</div></div><div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:a.errors>0?"var(--danger)":"var(--success)"}}>{a.errors}</div><div style={{fontSize:11,color:"var(--t3)"}}>Errors</div></div><div style={{textAlign:"center"}}><div style={{fontSize:12,color:"var(--t2)"}}>{a.last}</div><div style={{fontSize:11,color:"var(--t3)"}}>Last run</div></div><Bdg type={a.status==="running"?"success":a.status==="warn"?"warn":"muted"} ch={a.status==="running"?"● Live":a.status==="warn"?"⚠ Warning":"⏸ Paused"}/></div></div>);})}</div></div>);
 
-const AdminAnalytics=()=>(
-  <div className="fade-in">
-    <SH title="Analytics" sub="Revenue & growth intelligence"/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}>
-      <SC label="Total MRR" value="$48,200" sub="↑10% MoM" trend="up" Icon={DollarSign} color="var(--success)"/>
-      <SC label="Avg Retainer" value="$2,008" Icon={TrendingUp} color="var(--accent)"/>
-      <SC label="Churn Rate" value="2.1%" Icon={Activity} color="var(--warn)"/>
-      <SC label="Client LTV" value="$28,400" Icon={Star} color="var(--accent2)"/>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-      <div className="card">
-        <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Monthly Revenue</div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Bar dataKey="r" name="Revenue" fill="var(--accent)" radius={[4,4,0,0]}/></BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="card">
-        <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Client Growth</div>
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Line type="monotone" dataKey="c" name="Clients" stroke="var(--accent2)" strokeWidth={2} dot={{fill:"var(--accent2)",r:3}}/></LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  </div>
-);
+const AdminSocialAds=()=>{const [modal,setModal]=useState(false);const [camps,setCamps]=useState(ADS);const [form,setForm]=useState({plat:"📘 Meta",niche:"Dental Offices",city:"Austin TX",goal:"Book a demo call",tone:"Professional"});const [loading,setLoading]=useState(false);const [gen,setGen]=useState(null);const [copied,setCopied]=useState(false);const generate=async()=>{setLoading(true);setGen(null);try{const res=await fetch("/api/generate-ad",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform:form.plat,niche:form.niche,city:form.city,goal:form.goal,tone:form.tone})});const d=await res.json();setGen(d);}catch(e){setGen({hook:`Your ${form.niche} calls are going to voicemail after hours.`,headline:`AI Receptionist for ${form.niche}`,primary_text:`Never miss another call. Our AI answers 24/7, books appointments instantly, and follows up every lead automatically.`,cta:"Book a Demo",hashtags:["AIReceptionist","LocalBusiness","NeverMissACall"],targeting_tip:`Target ${form.niche.toLowerCase()} owners aged 35–60 in ${form.city}.`});}setLoading(false);};return(<div className="fade-in"><SH title="Social Ad Manager" sub="Claude AI generates platform-native copy for every campaign" action={<button className="btn btn-primary" onClick={()=>setModal(true)}><Sparkles size={13}/>Generate Ad</button>}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:24}}>{[["📘","Meta","Connected","var(--success)"],["🔵","Google","Connected","var(--success)"],["💼","LinkedIn","Connect","var(--warn)"],["🎵","TikTok","Connect","var(--t3)"]].map(([ic,n,s,c])=>(<div key={n} className="card-sm" style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:6}}>{ic}</div><div style={{fontSize:13,fontWeight:600}}>{n}</div><div style={{fontSize:11,color:c,marginTop:3,fontWeight:500}}>{s}</div></div>))}</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}><SC label="Total Spend" value="$86.30" sub="This week" Icon={DollarSign} color="var(--warn)"/><SC label="Impressions" value="12,810" Icon={Eye} color="var(--accent)"/><SC label="Leads Generated" value="27" sub="$3.20 avg CPL" trend="up" Icon={Target} color="var(--success)"/><SC label="Active Campaigns" value="3" Icon={Megaphone} color="var(--accent2)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Campaigns</div><table><thead><tr><th>Campaign</th><th>Platform</th><th>Spend</th><th>Impr.</th><th>Clicks</th><th>Leads</th><th>CPL</th><th>Status</th></tr></thead><tbody>{camps.map(c=>(<tr key={c.id}><td style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</td><td style={{fontSize:12}}>{c.plat}</td><td style={{fontWeight:600,color:"var(--t1)"}}>${c.spend.toFixed(2)}</td><td>{c.imp.toLocaleString()}</td><td>{c.clicks}</td><td style={{fontWeight:700,color:"var(--success)"}}>{c.leads}</td><td>${c.cpl.toFixed(2)}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td></tr>))}</tbody></table></div>{modal&&(<div className="modal-overlay" onClick={()=>setModal(false)}><div className="modal fade-in" onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><div style={{fontSize:16,fontWeight:700}}>Generate Ad Copy</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>Powered by Claude AI</div></div><button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={18}/></button></div><div style={{display:"grid",gap:14}}><div><label>Platform</label><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>{["📘 Meta","🔵 Google","💼 LinkedIn","🎵 TikTok"].map(p=>(<button key={p} onClick={()=>setForm(f=>({...f,plat:p}))} className="btn" style={{padding:"6px 12px",fontSize:12,background:form.plat===p?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${form.plat===p?"var(--accent)":"var(--border)"}`,color:form.plat===p?"var(--accent)":"var(--t2)"}}>{p}</button>))}</div></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Target Niche</label><select value={form.niche} onChange={e=>setForm(f=>({...f,niche:e.target.value}))}>{["Dental Offices","Real Estate Agents","HVAC Companies","Med Spas","Law Firms","Chiropractors","Plumbers"].map(n=><option key={n}>{n}</option>)}</select></div><div><label>Target City</label><input value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))}/></div></div><div><label>Campaign Goal</label><input value={form.goal} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}/></div><div><label>Tone</label><select value={form.tone} onChange={e=>setForm(f=>({...f,tone:e.target.value}))}>{["Professional","Urgent","Conversational","Bold","Empathetic"].map(t=><option key={t}>{t}</option>)}</select></div><button className="btn btn-primary" onClick={generate} disabled={loading} style={{width:"100%",justifyContent:"center",padding:"10px"}}>{loading?<><RefreshCw size={14} className="aac-spin"/>Generating…</>:<><Sparkles size={14}/>Generate with Claude AI</>}</button>{gen&&(<div style={{background:"var(--bg-card2)",border:"1px solid var(--border2)",borderRadius:"var(--r)",padding:16}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}><span style={{fontSize:13,fontWeight:600,color:"var(--success)"}}>✓ Generated by Claude</span><button className="btn btn-ghost" onClick={()=>{navigator.clipboard.writeText(JSON.stringify(gen,null,2));setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{padding:"4px 10px",fontSize:11}}>{copied?<><Check size={11}/>Copied!</>:<><Copy size={11}/>Copy all</>}</button></div>{[["Hook",gen.hook],["Headline",gen.headline],["Ad Body",gen.primary_text],["CTA Button",gen.cta],["Targeting Tip",gen.targeting_tip]].filter(([,v])=>v).map(([l,v])=>(<div key={l} style={{marginBottom:12}}><div style={{fontSize:10,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>{l}</div><div style={{fontSize:13,color:"var(--t1)",lineHeight:1.55}}>{v}</div></div>))}{gen.hashtags&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>{gen.hashtags.map(h=><Bdg key={h} type="info" ch={`#${h}`}/>)}</div>}<button className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:14}} onClick={()=>{setCamps(c=>[{id:Date.now(),plat:form.plat,name:`${form.niche} — ${form.city}`,status:"active",spend:0,imp:0,clicks:0,leads:0,cpl:0},...c]);setModal(false);setGen(null);}}><Send size={13}/>Save Campaign</button></div>)}</div></div></div>)}</div>);};
 
-const AdminAgents=()=>(
-  <div className="fade-in">
-    <SH title="AI Agents" sub="Real-time health across all client deployments"/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:14,marginBottom:24}}>
-      <SC label="Total Agents" value="24" Icon={Bot} color="var(--accent)"/>
-      <SC label="Healthy" value="22" sub="92% uptime" trend="up" Icon={CheckCircle} color="var(--success)"/>
-      <SC label="Warnings" value="2" Icon={AlertCircle} color="var(--warn)"/>
-      <SC label="Calls Today" value="847" Icon={PhoneCall} color="var(--accent2)"/>
-    </div>
-    <div className="card" style={{padding:0,overflow:"hidden"}}>
-      <table><thead><tr><th>Client</th><th>Status</th><th>Success Rate</th><th>Avg Duration</th><th>Calls Today</th><th>Errors</th></tr></thead>
-        <tbody>{CLIENTS.map(c=>{
-          const sr=Math.floor(82+Math.random()*15),ct=Math.floor(8+Math.random()*30),err=c.agent==="warn"?Math.floor(2+Math.random()*4):0;
-          return(<tr key={c.id}>
-            <td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td>
-            <td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent==="healthy"?"Healthy":"Warning"}</span></td>
-            <td><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{flex:1,height:4,background:"var(--border2)",borderRadius:2}}><div style={{height:"100%",width:`${sr}%`,borderRadius:2,background:sr>85?"var(--success)":sr>70?"var(--warn)":"var(--danger)"}}/></div><span style={{fontSize:12,fontWeight:600}}>{sr}%</span></div></td>
-            <td>{Math.floor(2+Math.random()*3)}m {Math.floor(10+Math.random()*49)}s</td>
-            <td style={{fontWeight:600}}>{ct}</td>
-            <td><span style={{color:err>0?"var(--danger)":"var(--success)",fontWeight:600}}>{err}</span></td>
-          </tr>);
-        })}</tbody>
-      </table>
-    </div>
-  </div>
-);
+const AdminSettings=()=>(<div className="fade-in"><SH title="Agency Settings"/><div style={{display:"grid",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Agency Profile</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Agency Name</label><input defaultValue="AI Automated Calls"/></div><div><label>Website</label><input defaultValue="aiautomatedcalls.com"/></div><div><label>Owner Name</label><input defaultValue="Your Name"/></div><div><label>Support Email</label><input defaultValue="support@aiautomatedcalls.com"/></div></div></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Integrations</div>{[["Vapi","Connected","var(--success)"],["GoHighLevel","Connected","var(--success)"],["Twilio","Connected","var(--success)"],["n8n Cloud","Connected","var(--success)"],["Anthropic","Connected","var(--success)"],["Stripe","Connect now","var(--warn)"],["Resend","Connect now","var(--warn)"]].map(([n,s,c])=>(<div key={n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--border)"}}><span style={{fontSize:13,fontWeight:500,color:"var(--t1)"}}>{n}</span><div style={{display:"flex",alignItems:"center",gap:8}}><Dot c={c}/><span style={{fontSize:12,color:c}}>{s}</span></div></div>))}</div></div></div>);
 
-const AdminAutomations=()=>(
-  <div className="fade-in">
-    <SH title="Automations" sub="n8n workflow status monitor" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/>
-    <div style={{display:"grid",gap:12}}>
-      {AUTOS.map(a=>{
-        const SI=a.status==="running"?Zap:a.status==="warn"?AlertCircle:Clock;
-        return(<div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
-          <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:a.status==="running"?"var(--success-dim)":a.status==="warn"?"var(--warn-dim)":"var(--bg-card2)",display:"flex",alignItems:"center",justifyContent:"center"}}><SI size={18} color={a.status==="running"?"var(--success)":a.status==="warn"?"var(--warn)":"var(--t3)"}/></div>
-          <div style={{flex:1,minWidth:140}}><div style={{fontWeight:600,fontSize:14,color:"var(--t1)"}}>{a.name}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{a.desc}</div></div>
-          <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}>
-            <div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700}}>{a.today}</div><div style={{fontSize:11,color:"var(--t3)"}}>Today</div></div>
-            <div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:a.errors>0?"var(--danger)":"var(--success)"}}>{a.errors}</div><div style={{fontSize:11,color:"var(--t3)"}}>Errors</div></div>
-            <div style={{textAlign:"center"}}><div style={{fontSize:12,color:"var(--t2)"}}>{a.last}</div><div style={{fontSize:11,color:"var(--t3)"}}>Last run</div></div>
-            <Bdg type={a.status==="running"?"success":a.status==="warn"?"warn":"muted"} ch={a.status==="running"?"● Live":a.status==="warn"?"⚠ Warning":"⏸ Paused"}/>
-          </div>
-        </div>);
-      })}
-    </div>
-  </div>
-);
+const ClientDashboard=()=>(<div className="fade-in"><SH title="Your AI Receptionist" sub="Sunrise Dental · Standard Plan · Live since Oct 2024"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:24}}><SC label="Calls This Month" value="312" sub="↑28 vs last month" trend="up" Icon={PhoneCall} color="var(--accent)"/><SC label="Appointments Booked" value="89" sub="28.5% booking rate" trend="up" Icon={Calendar} color="var(--success)"/><SC label="Revenue Captured" value="$31,150" sub="Est. $350/patient" Icon={DollarSign} color="var(--warn)"/><SC label="AI Uptime" value="99.8%" sub="Zero missed calls" Icon={Activity} color="var(--accent2)"/></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Call Volume — Last 14 Days</div><ResponsiveContainer width="100%" height={180}><BarChart data={CALLS}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="d" tick={{fill:"var(--t3)",fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Bar dataKey="calls" name="Total Calls" fill="var(--accent)" radius={[3,3,0,0]} opacity={0.7}/><Bar dataKey="booked" name="Booked" fill="var(--success)" radius={[3,3,0,0]}/></BarChart></ResponsiveContainer></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginTop:16}}><div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>This Week</div>{[["Calls handled","74",PhoneCall,"var(--accent)"],["Appointments booked","21",Calendar,"var(--success)"],["After-hours calls","28",Clock,"var(--warn)"],["No-shows recovered","5",RefreshCw,"var(--accent2)"]].map(([l,v,Ic,c])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid var(--border)"}}><div style={{display:"flex",alignItems:"center",gap:7,color:"var(--t2)",fontSize:13}}><Ic size={13} color={c}/>{l}</div><span style={{fontWeight:700,color:"var(--t1)"}}>{v}</span></div>))}</div><div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>Agent Status</div><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}><div style={{width:9,height:9,borderRadius:"50%",background:"var(--success)",animation:"pulse 2s ease infinite"}}/><span style={{fontSize:13,color:"var(--success)",fontWeight:600}}>Live & Healthy</span></div>{[["Voice","Brian · eleven_flash_v2_5"],["Model","GPT-4o via Vapi"],["Calendar","Native booking"],["Next report","Jun 1, 2026"]].map(([l,v])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid var(--border)"}}><span style={{fontSize:12,color:"var(--t3)"}}>{l}</span><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{v}</span></div>))}</div></div></div>);
 
-// ─── SOCIAL ADS (live Claude API) ────────────────────────────
-const AdminSocialAds=()=>{
-  const [modal,setModal]=useState(false);
-  const [camps,setCamps]=useState(ADS);
-  const [form,setForm]=useState({plat:"📘 Meta",niche:"Dental Offices",city:"Austin TX",goal:"Book a demo call",tone:"Professional"});
-  const [loading,setLoading]=useState(false);
-  const [gen,setGen]=useState(null);
-  const [copied,setCopied]=useState(false);
+const ClientRecordings=()=>{const [sel,setSel]=useState(null);return(<div className="fade-in"><SH title="Call Recordings" sub="312 calls this month · All transcribed by AI"/><div style={{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}}><div style={{display:"flex",flexDirection:"column",gap:10}}>{RECS.map(r=>(<div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(31,168,160,.04)":"var(--bg-card)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div style={{display:"flex",alignItems:"center",gap:8}}>{r.type==="inbound"?<PhoneIncoming size={14} color="var(--success)"/>:<PhoneCall size={14} color="var(--accent)"/>}<span style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{r.from}</span></div><Bdg type={r.outcome==="booked"?"success":r.outcome==="callback"?"warn":"info"} ch={r.outcome}/></div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,color:"var(--t3)"}}>{r.time}</span><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,color:"var(--t3)"}}><Clock size={11}/> {r.dur}</span><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}} onClick={e=>e.stopPropagation()}><Play size={11}/>Play</button></div></div></div>))}</div>{sel&&(<div className="card fade-in" style={{alignSelf:"flex-start",position:"sticky",top:"calc(var(--topbar-h) + 16px)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}><div><div style={{fontWeight:700,fontSize:14}}>{sel.from}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{sel.time} · {sel.dur}</div></div><button onClick={()=>setSel(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={16}/></button></div><div style={{display:"flex",gap:8,marginBottom:14}}><Bdg type={sel.outcome==="booked"?"success":"info"} ch={sel.outcome}/><Bdg type="muted" ch={sel.type}/></div><div style={{background:"var(--bg-card2)",borderRadius:8,padding:14,marginBottom:12}}><div style={{fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Transcript</div><div style={{fontSize:13,lineHeight:1.75}}>{sel.tx.split("\n").map((line,i)=>{const ai=line.startsWith("[AI]");return<div key={i} style={{marginBottom:4,color:ai?"var(--accent)":"var(--t2)",fontWeight:ai?600:400}}>{line}</div>;})}</div></div><div style={{display:"flex",gap:8}}><button className="btn btn-ghost" style={{flex:1,justifyContent:"center",fontSize:12}}><Download size={12}/>Export</button><button className="btn btn-primary" style={{flex:1,justifyContent:"center",fontSize:12}}><Play size={12}/>Play Audio</button></div></div>)}</div></div>);};
 
-  const generate=async()=>{
-    setLoading(true);setGen(null);
+const ClientAppointments=()=>{const A=[{id:1,name:"Jennifer Walsh",date:"Today 3:00 PM",type:"New Patient — Cleaning",status:"confirmed",phone:"(512) 441-2211"},{id:2,name:"Marcus Kim",date:"Today 4:30 PM",type:"Emergency — Toothache",status:"confirmed",phone:"(512) 773-5521"},{id:3,name:"Priya Patel",date:"Tomorrow 10:00 AM",type:"Follow-up — Filling",status:"pending",phone:"(512) 334-8814"},{id:4,name:"David Chen",date:"Tomorrow 2:00 PM",type:"New Patient — Consult",status:"confirmed",phone:"(512) 226-9982"},{id:5,name:"Sarah Johnson",date:"Jun 6 · 11:00 AM",type:"Cleaning",status:"confirmed",phone:"(512) 889-1140"}];return(<div className="fade-in"><SH title="Appointments" sub="Booked automatically by your AI receptionist"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}><SC label="This Week" value="21" Icon={Calendar} color="var(--accent)"/><SC label="Pending Confirm" value="3" Icon={Clock} color="var(--warn)"/><SC label="No-Shows" value="2" Icon={PhoneMissed} color="var(--danger)"/><SC label="Recovered" value="1" sub="via AI re-book" Icon={RefreshCw} color="var(--success)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Phone</th></tr></thead><tbody>{A.map(a=>(<tr key={a.id}><td style={{fontWeight:600,color:"var(--t1)"}}>{a.name}</td><td>{a.date}</td><td style={{fontSize:12}}>{a.type}</td><td><Bdg type={a.status==="confirmed"?"success":"warn"} ch={a.status}/></td><td style={{fontSize:12,color:"var(--t3)"}}>{a.phone}</td></tr>))}</tbody></table></div></div>);};
+
+const ClientBilling=()=>(<div className="fade-in"><SH title="Billing" sub="Standard Plan · Active"/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}><div className="card" style={{background:"linear-gradient(135deg,rgba(31,168,160,.07),rgba(61,123,217,.05))",border:"1px solid rgba(31,168,160,.14)"}}><div style={{fontSize:11,color:"var(--accent)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Current Plan</div><div style={{fontSize:28,fontWeight:800,marginBottom:4}}>Standard</div><div style={{fontSize:18,fontWeight:600,color:"var(--accent)",marginBottom:16}}>$2,000<span style={{fontSize:13,color:"var(--t3)"}}>/month</span></div>{["AI voice receptionist 24/7","Outbound lead follow-up","SMS + email sequences","No-show re-booking","Monthly ROI report","Dashboard access"].map(f=>(<div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><CheckCircle size={13} color="var(--success)"/><span style={{fontSize:13,color:"var(--t2)"}}>{f}</span></div>))}</div><div style={{display:"flex",flexDirection:"column",gap:14}}><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Next Billing</div><div style={{fontSize:18,fontWeight:700}}>June 1, 2026</div><div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>$2,000 via Stripe · Visa ····4242</div></div><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Setup Fee</div><div style={{fontSize:18,fontWeight:700}}>$1,500</div><div style={{fontSize:12,color:"var(--success)",marginTop:2}}>✓ Paid</div></div><button className="btn btn-ghost" style={{justifyContent:"center",padding:10}}>Upgrade to Premium — $3,000/mo</button></div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Invoice History</div><table><thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>{[["INV-0012","May 1, 2026","$2,000"],["INV-0011","Apr 1, 2026","$2,000"],["INV-0010","Mar 1, 2026","$2,000"],["INV-0009","Oct 3, 2025","$3,500"]].map(([id,d,a])=>(<tr key={id}><td style={{fontWeight:500,color:"var(--t1)"}}>{id}</td><td>{d}</td><td style={{fontWeight:700,color:"var(--t1)"}}>{a}</td><td><Bdg type="success" ch="paid"/></td><td><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}}><Download size={11}/>PDF</button></td></tr>))}</tbody></table></div></div>);
+
+const ClientSettings=()=>{const [saved,setSaved]=useState(false);return(<div className="fade-in"><SH title="Settings" sub="Configure your AI receptionist"/><div style={{display:"grid",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Information</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name</label><input defaultValue="Sunrise Dental"/></div><div><label>Phone Number</label><input defaultValue="+1 (512) 884-2211"/></div><div><label>Address</label><input defaultValue="2420 S Lamar Blvd, Austin TX"/></div><div><label>Website</label><input defaultValue="sunrisedental.com"/></div></div></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Hours</div>{[["Mon–Fri","9:00 AM – 6:00 PM"],["Saturday","10:00 AM – 3:00 PM"],["Sunday","Closed"]].map(([d,h])=>(<div key={d} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)"}}><span style={{fontSize:13,color:"var(--t2)",width:80}}>{d}</span><input defaultValue={h} style={{width:200}}/></div>))}</div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>AI Agent Settings</div><div style={{display:"grid",gap:12}}><div><label>Agent Voice</label><select><option>Brian (Professional, Male) · ElevenLabs Flash</option><option>Custom (ElevenLabs)</option></select></div><div><label>Greeting Message</label><textarea defaultValue="Thank you for calling Sunrise Dental! This is your AI dental assistant. How can I help you today?" rows={3}/></div><div><label>After-Hours Message</label><textarea defaultValue="You've reached Sunrise Dental after hours. I can still help schedule an appointment or answer questions!" rows={3}/></div></div></div><button className="btn btn-primary" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}} style={{justifyContent:"center",padding:"10px",fontSize:14}}>{saved?<><Check size={14}/>Saved!</>:"Save Changes"}</button></div></div>);};
+
+// ─── MARKETING PAGE — Lead form wired to /api/submit-lead ─────
+const MarketingPage=({onGetStarted})=>{
+  const [form,setForm]=useState({name:'',phone:'',business_type:''});
+  const [submitStatus,setSubmitStatus]=useState('idle');
+  const [errMsg,setErrMsg]=useState('');
+
+  const handleSubmit=async()=>{
+    if(!form.name.trim()||!form.phone.trim()){setErrMsg('Please enter your name and phone number.');return;}
+    setSubmitStatus('loading');setErrMsg('');
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,messages:[{role:"user",content:`You are a direct response copywriter for AI Automated Calls (aiautomatedcalls.com). We deploy AI voice receptionists for local businesses — they answer 24/7, book appointments, and follow up leads automatically.\n\nWrite a ${form.plat} ad:\n• Target: ${form.niche} in ${form.city}\n• Goal: ${form.goal}\n• Tone: ${form.tone}\n\nReturn ONLY valid JSON, no markdown:\n{"hook":"scroll-stopping first line <15 words","headline":"punchy <40 chars","primary_text":"2-3 sentences pain-first","cta":"button text 4 words max","hashtags":["tag1","tag2","tag3"],"targeting_tip":"one sentence on best audience"}`}]})});
-      const d=await res.json();
-      setGen(JSON.parse(d.content[0].text.replace(/```json|```/g,"").trim()));
-    }catch(e){
-      setGen({hook:`Your ${form.niche} calls are going to voicemail after hours.`,headline:`AI Receptionist for ${form.niche}`,primary_text:`Never miss another call. Our AI answers 24/7, books appointments instantly, and follows up every lead automatically. Setup in 48 hours.`,cta:"Book a Demo",hashtags:["AIReceptionist","LocalBusiness","NeverMissACall"],targeting_tip:`Target ${form.niche.toLowerCase()} owners aged 35–60 in ${form.city} interested in practice management software.`});
-    }
-    setLoading(false);
+      const res=await fetch('/api/submit-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:form.name.trim(),phone:form.phone.trim(),business_type:form.business_type})});
+      const data=await res.json();
+      if(data.success){setSubmitStatus('success');}
+      else{setErrMsg(data.error||'Something went wrong. Please try again.');setSubmitStatus('idle');}
+    }catch{setErrMsg('Connection error. Please try again.');setSubmitStatus('idle');}
   };
 
-  return(
-    <div className="fade-in">
-      <SH title="Social Ad Manager" sub="Claude AI generates platform-native copy for every campaign" action={<button className="btn btn-primary" onClick={()=>setModal(true)}><Sparkles size={13}/>Generate Ad</button>}/>
-      {/* Platform cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginBottom:24}}>
-        {[["📘","Meta","Connected","var(--success)"],["🔵","Google","Connected","var(--success)"],["💼","LinkedIn","Connect","var(--warn)"],["🎵","TikTok","Connect","var(--t3)"]].map(([ic,n,s,c])=>(
-          <div key={n} className="card-sm" style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:6}}>{ic}</div><div style={{fontSize:13,fontWeight:600}}>{n}</div><div style={{fontSize:11,color:c,marginTop:3,fontWeight:500}}>{s}</div></div>
-        ))}
-      </div>
-      {/* Metrics */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
-        <SC label="Total Spend" value="$86.30" sub="This week" Icon={DollarSign} color="var(--warn)"/>
-        <SC label="Impressions" value="12,810" Icon={Eye} color="var(--accent)"/>
-        <SC label="Leads Generated" value="27" sub="$3.20 avg CPL" trend="up" Icon={Target} color="var(--success)"/>
-        <SC label="Active Campaigns" value="3" Icon={Megaphone} color="var(--accent2)"/>
-      </div>
-      {/* Campaigns table */}
-      <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Campaigns</div>
-        <table><thead><tr><th>Campaign</th><th>Platform</th><th>Spend</th><th>Impr.</th><th>Clicks</th><th>Leads</th><th>CPL</th><th>Status</th></tr></thead>
-          <tbody>{camps.map(c=>(
-            <tr key={c.id}>
-              <td style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</td>
-              <td style={{fontSize:12}}>{c.plat}</td>
-              <td style={{fontWeight:600,color:"var(--t1)"}}>${c.spend.toFixed(2)}</td>
-              <td>{c.imp.toLocaleString()}</td><td>{c.clicks}</td>
-              <td style={{fontWeight:700,color:"var(--success)"}}>{c.leads}</td>
-              <td>${c.cpl.toFixed(2)}</td>
-              <td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-
-      {/* Modal */}
-      {modal&&(
-        <div className="modal-overlay" onClick={()=>setModal(false)}>
-          <div className="modal fade-in" onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div><div style={{fontSize:16,fontWeight:700}}>Generate Ad Copy</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>Powered by Claude AI · aiautomatedcalls.com</div></div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={18}/></button>
-            </div>
-            <div style={{display:"grid",gap:14}}>
-              <div>
-                <label>Platform</label>
-                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
-                  {["📘 Meta","🔵 Google","💼 LinkedIn","🎵 TikTok"].map(p=>(
-                    <button key={p} onClick={()=>setForm(f=>({...f,plat:p}))} className="btn" style={{padding:"6px 12px",fontSize:12,background:form.plat===p?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${form.plat===p?"var(--accent)":"var(--border)"}`,color:form.plat===p?"var(--accent)":"var(--t2)"}}>{p}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <div><label>Target Niche</label><select value={form.niche} onChange={e=>setForm(f=>({...f,niche:e.target.value}))}>{["Dental Offices","Real Estate Agents","HVAC Companies","Med Spas","Law Firms","Chiropractors","Plumbers"].map(n=><option key={n}>{n}</option>)}</select></div>
-                <div><label>Target City</label><input value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))}/></div>
-              </div>
-              <div><label>Campaign Goal</label><input value={form.goal} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}/></div>
-              <div><label>Tone</label><select value={form.tone} onChange={e=>setForm(f=>({...f,tone:e.target.value}))}>{["Professional","Urgent","Conversational","Bold","Empathetic"].map(t=><option key={t}>{t}</option>)}</select></div>
-              <button className="btn btn-primary" onClick={generate} disabled={loading} style={{width:"100%",justifyContent:"center",padding:"10px"}}>
-                {loading?<><RefreshCw size={14} className="aac-spin"/>Generating with Claude…</>:<><Sparkles size={14}/>Generate with Claude AI</>}
-              </button>
-              {gen&&(
-                <div style={{background:"var(--bg-card2)",border:"1px solid var(--border2)",borderRadius:"var(--r)",padding:16}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
-                    <span style={{fontSize:13,fontWeight:600,color:"var(--success)"}}>✓ Generated by Claude</span>
-                    <button className="btn btn-ghost" onClick={()=>{navigator.clipboard.writeText(JSON.stringify(gen,null,2));setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{padding:"4px 10px",fontSize:11}}>
-                      {copied?<><Check size={11}/>Copied!</>:<><Copy size={11}/>Copy all</>}
-                    </button>
-                  </div>
-                  {[["Hook",gen.hook],["Headline",gen.headline],["Ad Body",gen.primary_text],["CTA Button",gen.cta],["Targeting Tip",gen.targeting_tip]].filter(([,v])=>v).map(([l,v])=>(
-                    <div key={l} style={{marginBottom:12}}><div style={{fontSize:10,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>{l}</div><div style={{fontSize:13,color:"var(--t1)",lineHeight:1.55}}>{v}</div></div>
-                  ))}
-                  {gen.hashtags&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>{gen.hashtags.map(h=><Bdg key={h} type="info" ch={`#${h}`}/>)}</div>}
-                  <button className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:14}} onClick={()=>{setCamps(c=>[{id:Date.now(),plat:form.plat,name:`${form.niche} — ${form.city}`,status:"active",spend:0,imp:0,clicks:0,leads:0,cpl:0},...c]);setModal(false);setGen(null);}}>
-                    <Send size={13}/>Save & Schedule Campaign
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const AdminSettings=()=>(
-  <div className="fade-in">
-    <SH title="Agency Settings"/>
-    <div style={{display:"grid",gap:16}}>
-      <div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Agency Profile</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <div><label>Agency Name</label><input defaultValue="AI Automated Calls"/></div>
-          <div><label>Website</label><input defaultValue="aiautomatedcalls.com"/></div>
-          <div><label>Owner Name</label><input defaultValue="Your Name"/></div>
-          <div><label>Support Email</label><input defaultValue="support@aiautomatedcalls.com"/></div>
-        </div>
-      </div>
-      <div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Integrations</div>
-        {[["GoHighLevel","Connected","var(--success)"],["Retell AI","Connected","var(--success)"],["Twilio","Connected","var(--success)"],["n8n Cloud","Connected","var(--success)"],["Instantly.ai","Connected","var(--success)"],["Stripe","Connected","var(--success)"],["Apollo.io","Connect now","var(--warn)"]].map(([n,s,c])=>(
-          <div key={n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--border)"}}>
-            <span style={{fontSize:13,fontWeight:500,color:"var(--t1)"}}>{n}</span>
-            <div style={{display:"flex",alignItems:"center",gap:8}}><Dot c={c}/><span style={{fontSize:12,color:c}}>{s}</span></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-// ════════════════════════════════
-//  CLIENT PAGES
-// ════════════════════════════════
-
-const ClientDashboard=()=>(
-  <div className="fade-in">
-    <SH title="Your AI Receptionist" sub="Sunrise Dental · Standard Plan · Live since Oct 2024"/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:24}}>
-      <SC label="Calls This Month" value="312" sub="↑28 vs last month" trend="up" Icon={PhoneCall} color="var(--accent)"/>
-      <SC label="Appointments Booked" value="89" sub="28.5% booking rate" trend="up" Icon={Calendar} color="var(--success)"/>
-      <SC label="Revenue Captured" value="$31,150" sub="Est. $350/patient" Icon={DollarSign} color="var(--warn)"/>
-      <SC label="AI Uptime" value="99.8%" sub="Zero missed calls" Icon={Activity} color="var(--accent2)"/>
-    </div>
-    <div className="card">
-      <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Call Volume — Last 14 Days</div>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={CALLS}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/><XAxis dataKey="d" tick={{fill:"var(--t3)",fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Bar dataKey="calls" name="Total Calls" fill="var(--accent)" radius={[3,3,0,0]} opacity={0.7}/><Bar dataKey="booked" name="Booked" fill="var(--success)" radius={[3,3,0,0]}/></BarChart>
-      </ResponsiveContainer>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginTop:16}}>
-      <div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>This Week</div>
-        {[["Calls handled","74",PhoneCall,"var(--accent)"],["Appointments booked","21",Calendar,"var(--success)"],["After-hours calls","28",Clock,"var(--warn)"],["No-shows recovered","5",RefreshCw,"var(--accent2)"]].map(([l,v,Ic,c])=>(
-          <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid var(--border)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:7,color:"var(--t2)",fontSize:13}}><Ic size={13} color={c}/>{l}</div>
-            <span style={{fontWeight:700,color:"var(--t1)"}}>{v}</span>
-          </div>
-        ))}
-      </div>
-      <div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>Agent Status</div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-          <div style={{width:9,height:9,borderRadius:"50%",background:"var(--success)",animation:"pulse 2s ease infinite"}}/>
-          <span style={{fontSize:13,color:"var(--success)",fontWeight:600}}>Live & Healthy</span>
-        </div>
-        {[["Voice","Evelyn · Natural"],["Calendar","Google Calendar"],["Integration","Dentrix + GHL"],["Next report","Feb 1, 2025"]].map(([l,v])=>(
-          <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid var(--border)"}}>
-            <span style={{fontSize:12,color:"var(--t3)"}}>{l}</span><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{v}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-const ClientRecordings=()=>{
-  const [sel,setSel]=useState(null);
-  return(
-    <div className="fade-in">
-      <SH title="Call Recordings" sub="312 calls this month · All transcribed by AI"/>
-      <div style={{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}}>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {RECS.map(r=>(
-            <div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(31,168,160,.04)":"var(--bg-card)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  {r.type==="inbound"?<PhoneIncoming size={14} color="var(--success)"/>:<PhoneCall size={14} color="var(--accent)"/>}
-                  <span style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{r.from}</span>
-                </div>
-                <Bdg type={r.outcome==="booked"?"success":r.outcome==="callback"?"warn":"info"} ch={r.outcome}/>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"var(--t3)"}}>{r.time}</span>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:12,color:"var(--t3)"}}><Clock size={11}/> {r.dur}</span>
-                  <button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}} onClick={e=>e.stopPropagation()}><Play size={11}/>Play</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        {sel&&(
-          <div className="card fade-in" style={{alignSelf:"flex-start",position:"sticky",top:"calc(var(--topbar-h) + 16px)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
-              <div><div style={{fontWeight:700,fontSize:14}}>{sel.from}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{sel.time} · {sel.dur}</div></div>
-              <button onClick={()=>setSel(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={16}/></button>
-            </div>
-            <div style={{display:"flex",gap:8,marginBottom:14}}>
-              <Bdg type={sel.outcome==="booked"?"success":sel.outcome==="callback"?"warn":"info"} ch={sel.outcome}/>
-              <Bdg type="muted" ch={sel.type}/>
-            </div>
-            <div style={{background:"var(--bg-card2)",borderRadius:8,padding:14,marginBottom:12}}>
-              <div style={{fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Transcript</div>
-              <div style={{fontSize:13,lineHeight:1.75}}>
-                {sel.tx.split("\n").map((line,i)=>{
-                  const ai=line.startsWith("[AI]");
-                  return<div key={i} style={{marginBottom:4,color:ai?"var(--accent)":"var(--t2)",fontWeight:ai?600:400}}>{line}</div>;
-                })}
-              </div>
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              <button className="btn btn-ghost" style={{flex:1,justifyContent:"center",fontSize:12}}><Download size={12}/>Export</button>
-              <button className="btn btn-primary" style={{flex:1,justifyContent:"center",fontSize:12}}><Play size={12}/>Play Audio</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const ClientAppointments=()=>{
-  const A=[{id:1,name:"Jennifer Walsh",date:"Today 3:00 PM",type:"New Patient — Cleaning",status:"confirmed",phone:"(512) 441-2211"},{id:2,name:"Marcus Kim",date:"Today 4:30 PM",type:"Emergency — Toothache",status:"confirmed",phone:"(512) 773-5521"},{id:3,name:"Priya Patel",date:"Tomorrow 10:00 AM",type:"Follow-up — Filling",status:"pending",phone:"(512) 334-8814"},{id:4,name:"David Chen",date:"Tomorrow 2:00 PM",type:"New Patient — Consult",status:"confirmed",phone:"(512) 226-9982"},{id:5,name:"Sarah Johnson",date:"Feb 6 · 11:00 AM",type:"Cleaning",status:"confirmed",phone:"(512) 889-1140"}];
-  return(
-    <div className="fade-in">
-      <SH title="Appointments" sub="Booked automatically by your AI receptionist"/>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
-        <SC label="This Week" value="21" Icon={Calendar} color="var(--accent)"/>
-        <SC label="Pending Confirm" value="3" Icon={Clock} color="var(--warn)"/>
-        <SC label="No-Shows" value="2" Icon={PhoneMissed} color="var(--danger)"/>
-        <SC label="Recovered" value="1" sub="via AI re-book" Icon={RefreshCw} color="var(--success)"/>
-      </div>
-      <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <table><thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Phone</th></tr></thead>
-          <tbody>{A.map(a=>(
-            <tr key={a.id}>
-              <td style={{fontWeight:600,color:"var(--t1)"}}>{a.name}</td><td>{a.date}</td><td style={{fontSize:12}}>{a.type}</td>
-              <td><Bdg type={a.status==="confirmed"?"success":"warn"} ch={a.status}/></td>
-              <td style={{fontSize:12,color:"var(--t3)"}}>{a.phone}</td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-const ClientBilling=()=>(
-  <div className="fade-in">
-    <SH title="Billing" sub="Standard Plan · Active"/>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
-      <div className="card" style={{background:"linear-gradient(135deg,rgba(31,168,160,.07),rgba(129,140,248,.05))",border:"1px solid rgba(31,168,160,.14)"}}>
-        <div style={{fontSize:11,color:"var(--accent)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Current Plan</div>
-        <div style={{fontSize:28,fontWeight:800,marginBottom:4}}>Standard</div>
-        <div style={{fontSize:18,fontWeight:600,color:"var(--accent)",marginBottom:16}}>$2,000<span style={{fontSize:13,color:"var(--t3)"}}>/month</span></div>
-        {["AI voice receptionist 24/7","Outbound lead follow-up","SMS + email sequences","No-show re-booking","Monthly ROI report","Dashboard access"].map(f=>(
-          <div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><CheckCircle size={13} color="var(--success)"/><span style={{fontSize:13,color:"var(--t2)"}}>{f}</span></div>
-        ))}
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Next Billing</div><div style={{fontSize:18,fontWeight:700}}>February 1, 2025</div><div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>$2,000 via Stripe · Visa ····4242</div></div>
-        <div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Setup Fee</div><div style={{fontSize:18,fontWeight:700}}>$1,500</div><div style={{fontSize:12,color:"var(--success)",marginTop:2}}>✓ Paid · Oct 3, 2024</div></div>
-        <button className="btn btn-ghost" style={{justifyContent:"center",padding:10}}>Upgrade to Premium — $3,000/mo</button>
-      </div>
-    </div>
-    <div className="card" style={{padding:0,overflow:"hidden"}}>
-      <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Invoice History</div>
-      <table><thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
-        <tbody>{[["INV-0012","Jan 1, 2025","$2,000"],["INV-0011","Dec 1, 2024","$2,000"],["INV-0010","Nov 1, 2024","$2,000"],["INV-0009","Oct 3, 2024","$3,500"]].map(([id,d,a])=>(
-          <tr key={id}><td style={{fontWeight:500,color:"var(--t1)"}}>{id}</td><td>{d}</td><td style={{fontWeight:700,color:"var(--t1)"}}>{a}</td><td><Bdg type="success" ch="paid"/></td><td><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}}><Download size={11}/>PDF</button></td></tr>
-        ))}</tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const ClientSettings=()=>{
-  const [saved,setSaved]=useState(false);
-  return(
-    <div className="fade-in">
-      <SH title="Settings" sub="Configure your AI receptionist"/>
-      <div style={{display:"grid",gap:16}}>
-        <div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Information</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div><label>Business Name</label><input defaultValue="Sunrise Dental"/></div>
-            <div><label>Phone Number</label><input defaultValue="+1 (512) 884-2211"/></div>
-            <div><label>Address</label><input defaultValue="2420 S Lamar Blvd, Austin TX"/></div>
-            <div><label>Website</label><input defaultValue="sunrisedental.com"/></div>
-          </div>
-        </div>
-        <div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Hours</div>
-          {[["Mon–Fri","9:00 AM – 6:00 PM"],["Saturday","10:00 AM – 3:00 PM"],["Sunday","Closed"]].map(([d,h])=>(
-            <div key={d} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
-              <span style={{fontSize:13,color:"var(--t2)",width:80}}>{d}</span><input defaultValue={h} style={{width:200}}/>
-            </div>
-          ))}
-        </div>
-        <div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>AI Agent Settings</div>
-          <div style={{display:"grid",gap:12}}>
-            <div><label>Agent Voice</label><select><option>Evelyn (Warm, Female)</option><option>James (Professional, Male)</option><option>Custom (ElevenLabs)</option></select></div>
-            <div><label>Greeting Message</label><textarea defaultValue="Thank you for calling Sunrise Dental! This is your AI dental assistant. How can I help you today?" rows={3}/></div>
-            <div><label>After-Hours Message</label><textarea defaultValue="You've reached Sunrise Dental after hours. I can still help schedule an appointment or answer questions!" rows={3}/></div>
-          </div>
-        </div>
-        <button className="btn btn-primary" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}} style={{justifyContent:"center",padding:"10px",fontSize:14}}>
-          {saved?<><Check size={14}/>Saved!</>:"Save Changes"}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── LOGIN ────────────────────────────────────────────────────
-// ─── MARKETING PAGE ──────────────────────────────────────────
-const MarketingPage=({onGetStarted})=>{
-  const STEPS=[
-    {n:"01",title:"We deploy your AI",desc:"We configure a custom voice agent trained on your business — FAQs, services, hours, tone. Live in 48 hours."},
-    {n:"02",title:"It answers every call",desc:"Inbound, outbound, after-hours. Your AI greets callers by name, answers questions, and books appointments directly into your calendar."},
-    {n:"03",title:"You grow without hiring",desc:"Get a daily report of every call, booking, and lead. Scale to 500 calls a day without adding a single staff member."},
-  ];
-  const FEATURES=[
-    {icon:"📞",title:"24/7 inbound answering",desc:"Zero missed calls — evenings, weekends, holidays. Every caller gets a professional response in under 2 rings."},
-    {icon:"📅",title:"Appointment booking",desc:"The AI books directly into your calendar system — Google Calendar, Dentrix, Jane, or any scheduling tool."},
-    {icon:"🔁",title:"Outbound lead follow-up",desc:"New web lead? The AI calls them within 3 minutes, qualifies them, and books the appointment automatically."},
-    {icon:"💬",title:"SMS + email sequences",desc:"Automated confirmation texts, reminders, and no-show recovery sequences run in the background nonstop."},
-    {icon:"📊",title:"Daily performance reports",desc:"See every call, outcome, and booking. Know exactly what your AI said and what revenue it captured."},
-    {icon:"⚡",title:"48-hour setup",desc:"No long onboarding. We get your agent live in 2 days, not 2 months. You're operational before the week is out."},
-  ];
-  const TIERS=[
-    {name:"Starter",setup:"$750",price:"$1,200",mo:true,color:"var(--t2)",features:["AI inbound answering 24/7","Appointment booking","SMS confirmations","Monthly ROI report","Up to 300 calls/mo"],cta:"Get started"},
-    {name:"Standard",setup:"$1,500",price:"$2,000",mo:true,color:"var(--accent)",features:["Everything in Starter","Outbound lead follow-up","No-show recovery sequences","Call recordings + transcripts","Unlimited calls","GoHighLevel integration"],cta:"Most popular",highlight:true},
-    {name:"Premium",setup:"$2,500",price:"$3,000",mo:true,color:"var(--accent2)",features:["Everything in Standard","Google Ads management","Weekly performance call","AI reactivation of cold leads","Priority same-day support","Custom CRM integration"],cta:"Get started"},
-  ];
-  const STATS=[
-    {n:"94%",l:"Answer rate"},
-    {n:"< 2s",l:"Response time"},
-    {n:"24/7",l:"Always on"},
-    {n:"48hr",l:"Setup time"},
-  ];
+  const STEPS=[{n:"01",title:"We deploy your AI",desc:"We configure a custom voice agent trained on your business — FAQs, services, hours, tone. Live in 48 hours."},{n:"02",title:"It answers every call",desc:"Inbound, outbound, after-hours. Your AI greets callers by name, answers questions, and books appointments directly into your calendar."},{n:"03",title:"You grow without hiring",desc:"Get a daily report of every call, booking, and lead. Scale to 500 calls a day without adding a single staff member."}];
+  const FEATURES=[{icon:"📞",title:"24/7 inbound answering",desc:"Zero missed calls — evenings, weekends, holidays. Every caller gets a professional response in under 2 rings."},{icon:"📅",title:"Appointment booking",desc:"The AI books directly into your calendar system — Google Calendar, Dentrix, Jane, or any scheduling tool."},{icon:"🔁",title:"Outbound lead follow-up",desc:"New web lead? The AI calls them within 60 seconds, qualifies them, and books the appointment automatically."},{icon:"💬",title:"SMS + email sequences",desc:"Automated confirmation texts, reminders, and no-show recovery sequences run in the background nonstop."},{icon:"📊",title:"Daily performance reports",desc:"See every call, outcome, and booking. Know exactly what your AI said and what revenue it captured."},{icon:"⚡",title:"48-hour setup",desc:"No long onboarding. We get your agent live in 2 days, not 2 months. You're operational before the week is out."}];
+  const TIERS=[{name:"Starter",setup:"$750",price:"$1,200",color:"var(--t2)",features:["AI inbound answering 24/7","Appointment booking","SMS confirmations","Monthly ROI report","Up to 300 calls/mo"],cta:"Get started"},{name:"Standard",setup:"$1,500",price:"$2,000",color:"var(--accent)",features:["Everything in Starter","Outbound lead follow-up","No-show recovery sequences","Call recordings + transcripts","Unlimited calls","GoHighLevel integration"],cta:"Most popular",highlight:true},{name:"Premium",setup:"$2,500",price:"$3,000",color:"var(--accent2)",features:["Everything in Standard","Google Ads management","Weekly performance call","AI reactivation of cold leads","Priority same-day support","Custom CRM integration"],cta:"Get started"}];
+  const STATS=[{n:"94%",l:"Answer rate"},{n:"< 60s",l:"Speed to lead"},{n:"24/7",l:"Always on"},{n:"48hr",l:"Setup time"}];
   const NICHES=["Dental practices","Real estate agencies","HVAC & plumbing","Med spas","Law firms","Chiropractic offices"];
 
   return(
-    <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:"var(--font)",color:"var(--t1)"}}>
-
-      {/* ── NAV ── */}
+    <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:"var(--font)",color:"var(--t1)}}>}
       <nav style={{position:"sticky",top:0,zIndex:50,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(8px)",borderBottom:"1px solid var(--border)",padding:"0 5%",height:64,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <img src={logoFull} alt="AI Automated Calls" style={{height:36,objectFit:"contain"}}/>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -811,247 +169,101 @@ const MarketingPage=({onGetStarted})=>{
           <button onClick={onGetStarted} className="btn btn-primary" style={{fontSize:14,padding:"9px 20px"}}>Book a demo</button>
         </div>
       </nav>
-
-      {/* ── HERO ── */}
       <section style={{padding:"88px 5% 72px",textAlign:"center",maxWidth:860,margin:"0 auto"}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(31,168,160,0.08)",border:"1px solid rgba(31,168,160,0.2)",borderRadius:100,padding:"5px 14px",marginBottom:28}}>
           <span style={{width:7,height:7,borderRadius:"50%",background:"var(--accent)",display:"inline-block"}}/>
           <span style={{fontSize:12,fontWeight:600,color:"var(--accent)",letterSpacing:".04em"}}>LIVE IN 48 HOURS · NO CONTRACTS</span>
         </div>
-        <h1 style={{fontSize:"clamp(36px,5vw,62px)",fontWeight:800,lineHeight:1.1,letterSpacing:"-.03em",marginBottom:22}}>
-          Your business answers<br/>every call. <span style={{color:"var(--accent)"}}>Automatically.</span>
-        </h1>
-        <p style={{fontSize:"clamp(16px,2vw,20px)",color:"var(--t2)",lineHeight:1.65,maxWidth:620,margin:"0 auto 36px"}}>
-          AI Automated Calls deploys a custom AI voice receptionist for your business. It books appointments, follows up on leads, and handles after-hours calls — without hiring anyone.
-        </p>
-        <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-          <button onClick={onGetStarted} className="btn btn-primary" style={{fontSize:15,padding:"13px 28px",borderRadius:10}}>Get started →</button>
-          <button onClick={onGetStarted} className="btn btn-ghost" style={{fontSize:15,padding:"13px 28px",borderRadius:10}}>See a live demo</button>
-        </div>
-        <p style={{marginTop:18,fontSize:13,color:"var(--t3)"}}>Setup fee from $750 · No long-term contracts · Cancel anytime</p>
-      </section>
-
-      {/* ── STATS ── */}
-      <section style={{background:"var(--bg-base)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",padding:"32px 5%"}}>
-        <div style={{maxWidth:800,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,textAlign:"center"}}>
-          {STATS.map(s=>(
-            <div key={s.n}>
-              <div style={{fontSize:"clamp(28px,4vw,40px)",fontWeight:800,color:"var(--accent)",letterSpacing:"-.02em"}}>{s.n}</div>
-              <div style={{fontSize:13,color:"var(--t2)",marginTop:4,fontWeight:500}}>{s.l}</div>
+        <h1 style={{fontSize:"clamp(36px,5vw,62px)",fontWeight:800,lineHeight:1.1,letterSpacing:"-.03em",marginBottom:22}}>Your business answers<br/>every call. <span style={{color:"var(--accent)"}}>Automatically.</span></h1>
+        <p style={{fontSize:"clamp(16px,2vw,20px)",color:"var(--t2)",lineHeight:1.65,maxWidth:620,margin:"0 auto 36px"}}>AI Automated Calls deploys a custom AI voice receptionist for your business. It books appointments, follows up on leads, and handles after-hours calls — without hiring anyone.</p>
+        {submitStatus==='success'?(
+          <div style={{maxWidth:500,margin:'0 auto',background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)',borderRadius:12,padding:'28px',textAlign:'center'}}>
+            <div style={{fontSize:36,marginBottom:10}}>✅</div>
+            <div style={{fontSize:18,fontWeight:700,color:'var(--success)',marginBottom:8}}>You're all set!</div>
+            <div style={{fontSize:15,color:'var(--t2)',lineHeight:1.65}}>Expect a call within the next 60 seconds. Our AI will walk you through exactly how it works for your business.</div>
+          </div>
+        ):(
+          <div style={{maxWidth:500,margin:'0 auto'}}>
+            <div style={{display:'grid',gap:10,marginBottom:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <input placeholder="Your name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&handleSubmit()} style={{padding:'13px 14px',fontSize:14,borderRadius:8,border:'1px solid var(--border2)',fontFamily:'var(--font)',outline:'none',background:'#fff'}}/>
+                <input placeholder="Phone number" type="tel" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&handleSubmit()} style={{padding:'13px 14px',fontSize:14,borderRadius:8,border:'1px solid var(--border2)',fontFamily:'var(--font)',outline:'none',background:'#fff'}}/>
+              </div>
+              <select value={form.business_type} onChange={e=>setForm(f=>({...f,business_type:e.target.value}))} style={{padding:'13px 14px',fontSize:14,borderRadius:8,border:'1px solid var(--border2)',fontFamily:'var(--font)',background:'#fff',color:form.business_type?'var(--t1)':'#9CA3AF'}}>
+                <option value="">What type of business? (optional)</option>
+                <option>Dental practice</option><option>Real estate agency</option><option>HVAC / plumbing</option><option>Med spa</option><option>Law firm</option><option>Chiropractic</option><option>Other</option>
+              </select>
+              {errMsg&&<div style={{fontSize:13,color:'var(--danger)',textAlign:'left',paddingLeft:2}}>{errMsg}</div>}
+              <button onClick={handleSubmit} disabled={submitStatus==='loading'} className="btn btn-primary" style={{fontSize:15,padding:'13px',borderRadius:10,justifyContent:'center',width:'100%',opacity:submitStatus==='loading'?0.75:1}}>
+                {submitStatus==='loading'?'Connecting you now…':'Get my AI receptionist →'}
+              </button>
             </div>
-          ))}
-        </div>
+            <p style={{fontSize:13,color:'var(--t3)'}}>Setup fee from $750 · No contracts · <span style={{cursor:'pointer',textDecoration:'underline',color:'var(--accent)'}} onClick={onGetStarted}>Sign in</span></p>
+          </div>
+        )}
       </section>
-
-      {/* ── WHO IT'S FOR ── */}
+      <section style={{background:"var(--bg-base)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",padding:"32px 5%"}}>
+        <div style={{maxWidth:800,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,textAlign:"center"}}>{STATS.map(s=>(<div key={s.n}><div style={{fontSize:"clamp(28px,4vw,40px)",fontWeight:800,color:"var(--accent)",letterSpacing:"-.02em"}}>{s.n}</div><div style={{fontSize:13,color:"var(--t2)",marginTop:4,fontWeight:500}}>{s.l}</div></div>))}</div>
+      </section>
       <section style={{padding:"64px 5%",textAlign:"center"}}>
         <p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:12}}>Who we serve</p>
         <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em",marginBottom:32}}>Built for local businesses that run on calls</h2>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",maxWidth:700,margin:"0 auto"}}>
-          {NICHES.map(n=>(
-            <span key={n} style={{background:"var(--bg-base)",border:"1px solid var(--border)",borderRadius:100,padding:"8px 18px",fontSize:14,fontWeight:500,color:"var(--t1)"}}>{n}</span>
-          ))}
-        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",maxWidth:700,margin:"0 auto"}}>{NICHES.map(n=>(<span key={n} style={{background:"var(--bg-base)",border:"1px solid var(--border)",borderRadius:100,padding:"8px 18px",fontSize:14,fontWeight:500,color:"var(--t1)"}}>{n}</span>))}</div>
       </section>
-
-      {/* ── HOW IT WORKS ── */}
       <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-        <div style={{maxWidth:960,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:48}}>
-            <p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>How it works</p>
-            <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>From signed to live in 48 hours</h2>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:24}}>
-            {STEPS.map(s=>(
-              <div key={s.n} className="card" style={{padding:28}}>
-                <div style={{fontSize:13,fontWeight:700,color:"var(--accent)",letterSpacing:".06em",marginBottom:10}}>{s.n}</div>
-                <div style={{fontSize:17,fontWeight:700,marginBottom:10}}>{s.title}</div>
-                <div style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{s.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>How it works</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>From signed to live in 48 hours</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:24}}>{STEPS.map(s=>(<div key={s.n} className="card" style={{padding:28}}><div style={{fontSize:13,fontWeight:700,color:"var(--accent)",letterSpacing:".06em",marginBottom:10}}>{s.n}</div><div style={{fontSize:17,fontWeight:700,marginBottom:10}}>{s.title}</div><div style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{s.desc}</div></div>))}</div></div>
       </section>
-
-      {/* ── FEATURES ── */}
       <section style={{padding:"72px 5%"}}>
-        <div style={{maxWidth:960,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:48}}>
-            <p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Features</p>
-            <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Everything your front desk does — automated</h2>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>
-            {FEATURES.map(f=>(
-              <div key={f.title} className="card" style={{padding:24}}>
-                <div style={{fontSize:26,marginBottom:12}}>{f.icon}</div>
-                <div style={{fontSize:15,fontWeight:700,marginBottom:8}}>{f.title}</div>
-                <div style={{fontSize:13,color:"var(--t2)",lineHeight:1.65}}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Features</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Everything your front desk does — automated</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>{FEATURES.map(f=>(<div key={f.title} className="card" style={{padding:24}}><div style={{fontSize:26,marginBottom:12}}>{f.icon}</div><div style={{fontSize:15,fontWeight:700,marginBottom:8}}>{f.title}</div><div style={{fontSize:13,color:"var(--t2)",lineHeight:1.65}}>{f.desc}</div></div>))}</div></div>
       </section>
-
-      {/* ── PRICING ── */}
       <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-        <div style={{maxWidth:980,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:48}}>
-            <p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Pricing</p>
-            <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Simple, flat monthly pricing</h2>
-            <p style={{fontSize:15,color:"var(--t2)",marginTop:10}}>One-time setup fee + monthly retainer. No per-minute charges. No surprises.</p>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,alignItems:"start"}}>
-            {TIERS.map(t=>(
-              <div key={t.name} className="card" style={{padding:28,border:t.highlight?`2px solid var(--accent)`:"1px solid var(--border)",position:"relative",boxShadow:t.highlight?"0 8px 32px rgba(31,168,160,0.12)":"0 1px 4px rgba(0,0,0,0.06)"}}>
-                {t.highlight&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",background:"var(--accent)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 14px",borderRadius:100,letterSpacing:".06em",whiteSpace:"nowrap"}}>MOST POPULAR</div>}
-                <div style={{fontSize:13,fontWeight:600,color:t.color,marginBottom:8}}>{t.name}</div>
-                <div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>{t.setup} setup</div>
-                <div style={{fontSize:36,fontWeight:800,letterSpacing:"-.03em",color:"var(--t1)",marginBottom:4}}>{t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/mo</span></div>
-                <div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>
-                {t.features.map(f=>(
-                  <div key={f} style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:10,fontSize:13,color:"var(--t1)"}}>
-                    <CheckCircle size={14} color="var(--success)" style={{flexShrink:0,marginTop:1}}/>
-                    {f}
-                  </div>
-                ))}
-                <button onClick={onGetStarted} className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:20,padding:"11px",fontSize:14,background:t.highlight?"var(--accent)":"var(--bg-base)",color:t.highlight?"#fff":"var(--t1)",border:t.highlight?"none":"1px solid var(--border)"}}>
-                  {t.cta} →
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div style={{maxWidth:980,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Pricing</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Simple, flat monthly pricing</h2><p style={{fontSize:15,color:"var(--t2)",marginTop:10}}>One-time setup fee + monthly retainer. No per-minute charges. No surprises.</p></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,alignItems:"start"}}>{TIERS.map(t=>(<div key={t.name} className="card" style={{padding:28,border:t.highlight?`2px solid var(--accent)`:"1px solid var(--border)",position:"relative",boxShadow:t.highlight?"0 8px 32px rgba(31,168,160,0.12)":"none"}}>{t.highlight&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",background:"var(--accent)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 14px",borderRadius:100,whiteSpace:"nowrap"}}>MOST POPULAR</div>}<div style={{fontSize:13,fontWeight:600,color:t.color,marginBottom:8}}>{t.name}</div><div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>{t.setup} setup</div><div style={{fontSize:36,fontWeight:800,letterSpacing:"-.03em",color:"var(--t1)",marginBottom:4}}>{t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/ mo</span></div><div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>{t.features.map(f=>(<div key={f} style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:10,fontSize:13}}><CheckCircle size={14} color="var(--success)" style={{flexShrink:0,marginTop:1}}/>{f}</div>))}<button onClick={onGetStarted} className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:20,padding:"11px",fontSize:14,background:t.highlight?"var(--accent)":"var(--bg-base)",color:t.highlight?"#fff":"var(--t1)",border:t.highlight?"none":"1px solid var(--border)"}}>{t.cta} →</button></div>))}</div></div>
       </section>
-
-      {/* ── FINAL CTA ── */}
       <section style={{padding:"80px 5%",textAlign:"center"}}>
         <h2 style={{fontSize:"clamp(26px,4vw,44px)",fontWeight:800,letterSpacing:"-.03em",marginBottom:16}}>Ready to stop missing calls?</h2>
         <p style={{fontSize:16,color:"var(--t2)",maxWidth:480,margin:"0 auto 32px",lineHeight:1.65}}>Book a 20-minute demo and we'll show you exactly how it works for your business.</p>
         <button onClick={onGetStarted} className="btn btn-primary" style={{fontSize:16,padding:"14px 32px",borderRadius:10}}>Book your free demo →</button>
         <p style={{marginTop:16,fontSize:13,color:"var(--t3)"}}>No commitment required</p>
       </section>
-
-      {/* ── FOOTER ── */}
       <footer style={{borderTop:"1px solid var(--border)",padding:"28px 5%",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
         <img src={logoFull} alt="AI Automated Calls" style={{height:28,objectFit:"contain"}}/>
-        <div style={{display:"flex",gap:20,fontSize:13,color:"var(--t2)"}}>
-          <span style={{cursor:"pointer"}} onClick={onGetStarted}>Sign in</span>
-          <span>aiautomatedcalls.com</span>
-          <span>© 2026</span>
-        </div>
+        <div style={{display:"flex",gap:20,fontSize:13,color:"var(--t2)"}}><span style={{cursor:"pointer"}} onClick={onGetStarted}>Sign in</span><span>aiautomatedcalls.com</span><span>© 2026</span></div>
       </footer>
-
     </div>
   );
 };
 
-const LoginPage=({onLogin})=>{
-  const [role,setRole]=useState("admin");
-  return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:"22%",left:"50%",transform:"translateX(-50%)",width:560,height:260,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(31,168,160,.06) 0%,transparent 70%)",pointerEvents:"none"}}/>
-      <div style={{width:"100%",maxWidth:380}}>
-        <div style={{textAlign:"center",marginBottom:32}}>
-          <img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/>
-          <p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p>
-        </div>
-        <div className="card">
-          <div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg-card2)",borderRadius:8,padding:4}}>
-            {["admin","client"].map(r=>(
-              <button key={r} onClick={()=>setRole(r)} style={{flex:1,padding:"7px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:role===r?"var(--bg-card)":"transparent",color:role===r?"var(--t1)":"var(--t3)"}}>
-                {r==="admin"?"Agency Admin":"Client Portal"}
-              </button>
-            ))}
-          </div>
-          <div style={{display:"grid",gap:12,marginBottom:16}}>
-            <div><label>Email</label><input type="email" defaultValue={role==="admin"?"admin@aiautomatedcalls.com":"dr.park@sunrisedental.com"}/></div>
-            <div><label>Password</label><input type="password" defaultValue="••••••••"/></div>
-          </div>
-          <button className="btn btn-primary" onClick={()=>onLogin(role)} style={{width:"100%",justifyContent:"center",padding:"11px",fontSize:14}}>
-            Sign in as {role==="admin"?"Agency Admin":"Client"}
-          </button>
-          <div style={{textAlign:"center",marginTop:14}}><span style={{fontSize:12,color:"var(--t3)"}}>Forgot password? <span style={{color:"var(--accent)",cursor:"pointer"}}>Reset</span></span></div>
-        </div>
-        <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:18}}>Secured by Stripe · SOC 2 compliant · 99.8% uptime</p>
-      </div>
-    </div>
-  );
-};
+const LoginPage=({onLogin})=>{const [role,setRole]=useState("admin");return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24}}><div style={{width:"100%",maxWidth:380}}><div style={{textAlign:"center",marginBottom:32}}><img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/><p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p></div><div className="card"><div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg-card2)",borderRadius:8,padding:4}}>{["admin","client"].map(r=>(<button key={r} onClick={()=>setRole(r)} style={{flex:1,padding:"7px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:role===r?"var(--bg-card)":"transparent",color:role===r?"var(--t1)":"var(--t3)"}}>{r==="admin"?"Agency Admin":"Client Portal"}</button>))}</div><div style={{display:"grid",gap:12,marginBottom:16}}><div><label>Email</label><input type="email" defaultValue={role==="admin"?"admin@aiautomatedcalls.com":"dr.park@sunrisedental.com"}/></div><div><label>Password</label><input type="password" defaultValue="••••••••"/></div></div><button className="btn btn-primary" onClick={()=>onLogin(role)} style={{width:"100%",justifyContent:"center",padding:"11px",fontSize:14}}>Sign in as {role==="admin"?"Agency Admin":"Client"}</button><div style={{textAlign:"center",marginTop:14}}><span style={{fontSize:12,color:"var(--t3)"}}>Forgot password? <span style={{color:"var(--accent)",cursor:"pointer"}}>Reset</span></span></div></div><p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:18}}>Secured by Stripe · SOC 2 compliant · 99.8% uptime</p></div></div>);};
 
-// ─── PAGE MAP ─────────────────────────────────────────────────
-const PAGES={
-  overview:<AdminOverview/>, clients:<AdminClients/>, pipeline:<AdminPipeline/>,
-  analytics:<AdminAnalytics/>, agents:<AdminAgents/>, automations:<AdminAutomations/>,
-  social:<AdminSocialAds/>, settings:<AdminSettings/>,
-  cdash:<ClientDashboard/>, recordings:<ClientRecordings/>, appointments:<ClientAppointments/>,
-  billing:<ClientBilling/>, csettings:<ClientSettings/>,
-};
+const PAGES={overview:<AdminOverview/>,clients:<AdminClients/>,pipeline:<AdminPipeline/>,analytics:<AdminAnalytics/>,agents:<AdminAgents/>,automations:<AdminAutomations/>,social:<AdminSocialAds/>,settings:<AdminSettings/>,cdash:<ClientDashboard/>,recordings:<ClientRecordings/>,appointments:<ClientAppointments/>,billing:<ClientBilling/>,csettings:<ClientSettings/>};
 
-// ════════════════════════════════
-//  ROOT APP
-// ════════════════════════════════
 export default function App(){
-  const [screen,setScreen]=useState("marketing"); // 'marketing' | 'login' | 'app'
+  const [screen,setScreen]=useState("marketing");
   const [role,setRole]=useState(null);
   const [page,setPage]=useState("overview");
   const [col,setCol]=useState(false);
 
-  // Inject CSS
-  useEffect(()=>{
-    const el=document.createElement("style");
-    el.textContent=CSS;
-    document.head.appendChild(el);
-    return()=>document.head.removeChild(el);
-  },[]);
+  useEffect(()=>{const el=document.createElement("style");el.textContent=CSS;document.head.appendChild(el);return()=>document.head.removeChild(el);},[]);
+  useEffect(()=>{const s=localStorage.getItem("aac-sidebar-collapsed");if(s==="true")setCol(true);},[]);
+  useEffect(()=>{localStorage.setItem("aac-sidebar-collapsed",String(col));},[col]);
 
-  // Persist sidebar collapse state — localStorage key per EnvoyGlobe spec
-  useEffect(()=>{
-    const s=localStorage.getItem("aac-sidebar-collapsed");
-    if(s==="true")setCol(true);
-  },[]);
-  useEffect(()=>{
-    localStorage.setItem("aac-sidebar-collapsed",String(col));
-  },[col]);
-
-  const handleLogin=useCallback((r)=>{
-    setRole(r);
-    setPage(r==="admin"?"overview":"cdash");
-    setScreen("app");
-  },[]);
-
-  const handleSwitch=useCallback(()=>{
-    setRole(r=>{
-      const next=r==="admin"?"client":"admin";
-      setPage(next==="admin"?"overview":"cdash");
-      return next;
-    });
-  },[]);
+  const handleLogin=useCallback((r)=>{setRole(r);setPage(r==="admin"?"overview":"cdash");setScreen("app");},[]);
+  const handleSwitch=useCallback(()=>{setRole(r=>{const next=r==="admin"?"client":"admin";setPage(next==="admin"?"overview":"cdash");return next;});},[]);
 
   if(screen==="marketing") return <MarketingPage onGetStarted={()=>setScreen("login")}/>;
   if(screen==="login") return <LoginPage onLogin={handleLogin}/>;
 
   const ml=col?"var(--sidebar-c)":"var(--sidebar-w)";
-
-
   return(
     <div style={{minHeight:"100vh",background:"var(--bg-base)"}}>
-      {/* Desktop sidebar — hidden on mobile via .aac-sidebar CSS class */}
       <Sidebar col={col} setCol={setCol} page={page} setPage={setPage} role={role}/>
-
-      {/* Main content */}
       <main className="aac-main" style={{marginLeft:ml}}>
         <TopBar page={page} role={role} onSwitch={handleSwitch}/>
-
-        {/* .aac-content gets padding-bottom:80px on mobile to clear bottom bar */}
         <div className="aac-content" style={{padding:"24px",maxWidth:1100,margin:"0 auto"}}>
           {PAGES[page]??<div style={{color:"var(--t2)"}}>Page not found</div>}
         </div>
-
-        {/* Belt-and-suspenders spacer: 62px block, hidden on desktop */}
         <div className="aac-mobile-spacer"/>
       </main>
-
-      {/* Mobile bottom nav — hidden on desktop via .aac-mobile-nav CSS class */}
       <MobileNav page={page} setPage={setPage} role={role}/>
     </div>
   );
