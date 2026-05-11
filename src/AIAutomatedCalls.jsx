@@ -1032,7 +1032,6 @@ export default function App(){
 
   const ml=col?"var(--sidebar-c)":"var(--sidebar-w)";
 
-  const ml=col?"var(--sidebar-c)":"var(--sidebar-w)";
 
   return(
     <div style={{minHeight:"100vh",background:"var(--bg-base)"}}>
