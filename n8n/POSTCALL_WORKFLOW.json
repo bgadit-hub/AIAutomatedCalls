@@ -1,19 +1,50 @@
 {
-  "name": "AI Agency — Post-Call Processing",
+  "name": "AI Agency — Post-Call Processing (Vapi)",
   "nodes": [
+
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "retell-call-ended",
+        "path": "post-call",
         "responseMode": "immediatelyOnStart",
         "options": {}
       },
-      "id": "node-webhook-retell",
-      "name": "Webhook — Retell Call Ended",
+      "id": "node-webhook",
+      "name": "Webhook — Vapi Post-Call",
       "type": "n8n-nodes-base.webhook",
-      "position": [240, 300],
-      "notes": "Configure in Retell AI: Agent Settings > Webhook > Call Ended URL. Retell sends full transcript + call data."
+      "position": [240, 400],
+      "notes": "Path: post-call. Set N8N_WEBHOOK_URL to your lead-trigger URL — vapi-webhook.js derives this URL by replacing /lead-trigger with /post-call automatically.\n\nReceived fields:\n  vapi_call_id, lead_id, client_id, layer, call_status,\n  outcome, transcript, recording_url, duration_sec, cost_cents"
     },
+
+    {
+      "parameters": {
+        "jsCode": "const secret = $input.first().json.headers?.['x-webhook-secret'];\nconst expected = $env.N8N_WEBHOOK_SECRET;\nif (expected && secret !== expected) {\n  throw new Error('Webhook secret mismatch — rejected');\n}\nconst body = $input.first().json.body;\nif (!body?.transcript || body.transcript.trim().length < 20) {\n  throw new Error('No transcript — skipping analysis');\n}\nreturn [{ json: body }];"
+      },
+      "id": "node-verify",
+      "name": "Verify & Extract Body",
+      "type": "n8n-nodes-base.code",
+      "position": [460, 400],
+      "notes": "Verifies webhook secret and checks transcript exists.\nRequires N8N_WEBHOOK_SECRET env var (same value as in Cloudflare)."
+    },
+
+    {
+      "parameters": {
+        "dataPropertyName": "layer",
+        "rules": {
+          "rules": [
+            { "value": "layer1", "outputKey": "sales" },
+            { "value": "layer2", "outputKey": "client" }
+          ]
+        },
+        "fallbackOutput": "client"
+      },
+      "id": "node-route-layer",
+      "name": "Route by Layer",
+      "type": "n8n-nodes-base.switch",
+      "position": [680, 400],
+      "notes": "layer1 = our AI sales calls to prospects\nlayer2 = client's AI receptionist calls to their patients"
+    },
+
     {
       "parameters": {
         "method": "POST",
@@ -23,55 +54,243 @@
         "contentType": "json",
         "body": {
           "model": "claude-sonnet-4-20250514",
-          "max_tokens": 500,
+          "max_tokens": 600,
           "messages": [
             {
               "role": "user",
-              "content": "Analyze this sales call transcript and return ONLY a JSON object with these exact fields:\n\n{\n  \"outcome\": one of [\"payment_agreed\", \"follow_up_booked\", \"send_info\", \"not_interested\", \"no_answer\", \"escalated\"],\n  \"sentiment\": one of [\"positive\", \"neutral\", \"negative\"],\n  \"score\": integer 1-10 (likelihood to close),\n  \"objections\": [array of objections raised],\n  \"follow_up_date\": \"YYYY-MM-DD or null\",\n  \"summary\": \"2 sentence summary\",\n  \"action_required\": \"what needs to happen next\"\n}\n\nTranscript:\n{{ $json.transcript }}"
+              "content": "Analyze this AI sales call transcript. The AI was calling a local business owner about getting an AI receptionist / voice agent service.\n\nCall status: {{ $json.call_status }}\nDuration: {{ $json.duration_sec }} seconds\n\nReturn ONLY a valid JSON object with these exact fields (no markdown, no preamble):\n{\n  \"outcome\": \"payment_agreed\" | \"demo_booked\" | \"follow_up_booked\" | \"send_info\" | \"not_interested\" | \"voicemail\" | \"no_answer\" | \"other\",\n  \"sentiment\": \"positive\" | \"neutral\" | \"negative\",\n  \"score\": integer 1-10 (likelihood to close),\n  \"summary\": \"2-3 sentence summary of what happened\",\n  \"objections\": [\"array of specific objections raised\"],\n  \"next_step\": \"one specific action needed\",\n  \"key_insight\": \"one insight about this prospect\",\n  \"improvement_tips\": [\"up to 3 specific things the AI could have done better\"]\n}\n\nTranscript:\n{{ $json.transcript }}"
             }
           ]
         },
         "options": {}
       },
-      "id": "node-claude-analyze",
-      "name": "Claude — Analyze Call Transcript",
+      "id": "node-claude-sales",
+      "name": "Claude — Analyze Sales Call (L1)",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [460, 300],
-      "notes": "Uses Claude to extract structured data from the call. Credential: Anthropic API key as 'x-api-key' header."
+      "position": [900, 220],
+      "notes": "Credential: HTTP Header Auth\n  Name: Anthropic-API\n  Header: x-api-key\n  Value: your Anthropic API key\nAlso add header: anthropic-version = 2023-06-01"
     },
+
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.content[0].text;\nconst clean = raw.replace(/```json|```/g, '').trim();\ntry {\n  const parsed = JSON.parse(clean);\n  return [{ json: { ...parsed, call_id: $('Webhook — Retell Call Ended').item.json.call_id, ghl_contact_id: $('Webhook — Retell Call Ended').item.json.metadata?.ghl_contact_id, duration_seconds: $('Webhook — Retell Call Ended').item.json.end_timestamp - $('Webhook — Retell Call Ended').item.json.start_timestamp, transcript: $('Webhook — Retell Call Ended').item.json.transcript } }];\n} catch(e) {\n  return [{ json: { outcome: 'error', summary: 'Parse error: ' + e.message, call_id: $('Webhook — Retell Call Ended').item.json.call_id } }];\n}"
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 700,
+          "messages": [
+            {
+              "role": "user",
+              "content": "Analyze this AI receptionist call transcript. The AI was handling inbound/outbound calls for a local business (dental, medical, HVAC, law firm, etc.) on behalf of a client.\n\nCall status: {{ $json.call_status }}\nDuration: {{ $json.duration_sec }} seconds\n\nReturn ONLY a valid JSON object (no markdown, no preamble):\n{\n  \"summary\": \"2-3 sentence summary of the call\",\n  \"outcome\": \"appointment_booked\" | \"information_provided\" | \"callback_requested\" | \"transferred\" | \"complaint_handled\" | \"voicemail\" | \"no_answer\" | \"other\",\n  \"caller_sentiment\": \"positive\" | \"neutral\" | \"negative\",\n  \"appointment_booked\": true | false,\n  \"appointment_details\": {\"date\": \"...\", \"time\": \"...\", \"type\": \"...\"} or null,\n  \"key_moments\": [\"array of 2-4 important moments in the call\"],\n  \"missed_opportunities\": [\"things the AI could have handled better — be specific\"],\n  \"ai_coaching_notes\": \"one paragraph of coaching notes to improve the AI agent's performance\",\n  \"caller_intent\": \"brief description of why the caller called\"\n}\n\nTranscript:\n{{ $json.transcript }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "node-parse-json",
-      "name": "Parse Claude Response",
-      "type": "n8n-nodes-base.code",
-      "position": [680, 300]
+      "id": "node-claude-client",
+      "name": "Claude — Analyze Client Call (L2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 580],
+      "notes": "Same Anthropic credential as L1 node."
     },
+
     {
       "parameters": {
-        "dataPropertyName": "outcome",
+        "jsCode": "const raw = $input.first().json.content?.[0]?.text || '{}';\nconst clean = raw.replace(/```json|```/g, '').trim();\ntry {\n  const analysis = JSON.parse(clean);\n  const incoming = $('Route by Layer').item.json;\n  return [{ json: {\n    ...incoming,\n    analysis,\n    layer: 'layer1',\n  }}];\n} catch(e) {\n  const incoming = $('Route by Layer').item.json;\n  return [{ json: {\n    ...incoming,\n    analysis: { outcome: 'other', summary: 'Parse error: ' + e.message, score: 0, sentiment: 'neutral', objections: [], next_step: 'Manual review needed', key_insight: '', improvement_tips: [] },\n    layer: 'layer1',\n    parse_error: e.message,\n  }}];\n}"
+      },
+      "id": "node-parse-sales",
+      "name": "Parse Sales Response (L1)",
+      "type": "n8n-nodes-base.code",
+      "position": [1140, 220]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content?.[0]?.text || '{}';\nconst clean = raw.replace(/```json|```/g, '').trim();\ntry {\n  const analysis = JSON.parse(clean);\n  const incoming = $('Route by Layer').item.json;\n  return [{ json: {\n    ...incoming,\n    analysis,\n    layer: 'layer2',\n  }}];\n} catch(e) {\n  const incoming = $('Route by Layer').item.json;\n  return [{ json: {\n    ...incoming,\n    analysis: { outcome: 'other', summary: 'Parse error: ' + e.message, caller_sentiment: 'neutral', appointment_booked: false, key_moments: [], missed_opportunities: [], ai_coaching_notes: '' },\n    layer: 'layer2',\n    parse_error: e.message,\n  }}];\n}"
+      },
+      "id": "node-parse-client",
+      "name": "Parse Client Response (L2)",
+      "type": "n8n-nodes-base.code",
+      "position": [1140, 580]
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/recordings?vapi_call_id=eq.{{ $json.vapi_call_id }}&select=id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-get-recording-l1",
+      "name": "Get Recording ID (L1)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 220],
+      "notes": "Fetches internal recording.id from vapi_call_id.\nRequires n8n env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY"
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/recordings?vapi_call_id=eq.{{ $('Parse Client Response (L2)').item.json.vapi_call_id }}&select=id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-get-recording-l2",
+      "name": "Get Recording ID (L2)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 580]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const recording = $input.first().json[0];\nif (!recording?.id) throw new Error('Recording not found for vapi_call_id: ' + $('Parse Sales Response (L1)').item.json.vapi_call_id);\nconst data = $('Parse Sales Response (L1)').item.json;\nreturn [{ json: {\n  recording_id: recording.id,\n  data,\n}}];"
+      },
+      "id": "node-prep-l1",
+      "name": "Prep L1 Upsert Data",
+      "type": "n8n-nodes-base.code",
+      "position": [1580, 220]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const recording = $input.first().json[0];\nif (!recording?.id) throw new Error('Recording not found for vapi_call_id: ' + $('Parse Client Response (L2)').item.json.vapi_call_id);\nconst data = $('Parse Client Response (L2)').item.json;\nreturn [{ json: {\n  recording_id: recording.id,\n  data,\n}}];"
+      },
+      "id": "node-prep-l2",
+      "name": "Prep L2 Upsert Data",
+      "type": "n8n-nodes-base.code",
+      "position": [1580, 580]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/call_transcripts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=minimal" }
+          ]
+        },
+        "contentType": "json",
+        "body": {
+          "recording_id": "={{ $json.recording_id }}",
+          "transcript": "={{ $json.data.transcript }}",
+          "summary": "={{ $json.data.analysis.summary }}",
+          "key_moments": "={{ JSON.stringify($json.data.analysis.improvement_tips || []) }}",
+          "missed_opps": "={{ JSON.stringify($json.data.analysis.objections || []) }}",
+          "ai_notes": "={{ $json.data.analysis.key_insight + '\\n\\nNext step: ' + $json.data.analysis.next_step + '\\n\\nImprovement tips: ' + ($json.data.analysis.improvement_tips || []).join('; ') }}"
+        },
+        "options": {}
+      },
+      "id": "node-upsert-transcript-l1",
+      "name": "Supabase — Save L1 Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1800, 220],
+      "notes": "Upserts call_transcripts with Claude's sales call analysis.\nUnique constraint on recording_id ensures idempotency."
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/call_transcripts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=minimal" }
+          ]
+        },
+        "contentType": "json",
+        "body": {
+          "recording_id": "={{ $json.recording_id }}",
+          "transcript": "={{ $json.data.transcript }}",
+          "summary": "={{ $json.data.analysis.summary }}",
+          "key_moments": "={{ JSON.stringify($json.data.analysis.key_moments || []) }}",
+          "missed_opps": "={{ JSON.stringify($json.data.analysis.missed_opportunities || []) }}",
+          "ai_notes": "={{ $json.data.analysis.ai_coaching_notes }}"
+        },
+        "options": {}
+      },
+      "id": "node-upsert-transcript-l2",
+      "name": "Supabase — Save L2 Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1800, 580],
+      "notes": "Upserts call_transcripts with Claude's client call analysis.\nFills summary, key_moments, missed_opps, ai_notes columns."
+    },
+
+    {
+      "parameters": {
+        "dataPropertyName": "data.analysis.outcome",
         "rules": {
           "rules": [
-            { "value": "payment_agreed", "outputKey": "payment" },
+            { "value": "payment_agreed", "outputKey": "won" },
+            { "value": "demo_booked", "outputKey": "demo" },
             { "value": "follow_up_booked", "outputKey": "followup" },
             { "value": "send_info", "outputKey": "sendinfo" },
             { "value": "not_interested", "outputKey": "dead" },
-            { "value": "no_answer", "outputKey": "noanswer" },
-            { "value": "escalated", "outputKey": "escalated" }
+            { "value": "voicemail", "outputKey": "noanswer" },
+            { "value": "no_answer", "outputKey": "noanswer" }
           ]
-        }
+        },
+        "fallbackOutput": "other"
       },
-      "id": "node-switch-outcome",
-      "name": "Route by Call Outcome",
+      "id": "node-route-outcome",
+      "name": "Route by Sales Outcome",
       "type": "n8n-nodes-base.switch",
-      "position": [900, 300]
+      "position": [2020, 220]
+    },
+
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.data.lead_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "contentType": "json",
+        "body": {
+          "stage": "won",
+          "call_status": "demo_booked",
+          "qualified_score": "={{ $json.data.analysis.score }}",
+          "notes": "={{ $json.data.analysis.summary }}"
+        },
+        "options": {}
+      },
+      "id": "node-sb-won",
+      "name": "Supabase — Mark Lead Won",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2260, 60]
     },
 
     {
       "parameters": {
         "method": "PUT",
-        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.data.ghl_contact_id }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "contentType": "json",
@@ -79,8 +298,8 @@
           "tags": ["client-won", "awaiting-onboard"],
           "customField": {
             "call_outcome": "payment_agreed",
-            "call_score": "={{ $json.score }}",
-            "call_summary": "={{ $json.summary }}"
+            "call_score": "={{ $json.data.analysis.score }}",
+            "call_summary": "={{ $json.data.analysis.summary }}"
           }
         },
         "options": {}
@@ -88,232 +307,132 @@
       "id": "node-ghl-won",
       "name": "GHL — Tag as Won",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 100],
-      "notes": "PAYMENT AGREED path"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/pipelines/[YOUR_PIPELINE_ID]/opportunities",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "title": "New Client — Standard Tier",
-          "status": "won",
-          "contactId": "={{ $json.ghl_contact_id }}",
-          "monetaryValue": 2000,
-          "stageId": "[YOUR_CLOSED_STAGE_ID]"
-        },
-        "options": {}
-      },
-      "id": "node-ghl-deal",
-      "name": "GHL — Create Won Deal",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1360, 100]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_ONBOARDING_WORKFLOW_ID]/enroll",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "contactId": "={{ $json.ghl_contact_id }}"
-        },
-        "options": {}
-      },
-      "id": "node-ghl-onboard",
-      "name": "GHL — Start Onboarding Workflow",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1580, 100],
-      "notes": "Triggers the client onboarding sequence in GHL (welcome email, onboarding form, calendar booking)"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://hooks.slack.com/services/[YOUR_SLACK_WEBHOOK]",
-        "contentType": "json",
-        "body": {
-          "text": "🎉 NEW CLIENT CLOSED! AI just closed a deal on a sales call. Contact ID: {{ $json.ghl_contact_id }}. Onboarding sequence started."
-        },
-        "options": {}
-      },
-      "id": "node-slack-won",
-      "name": "Slack — Celebrate Win",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1800, 100]
+      "position": [2260, 140],
+      "notes": "GHL credential: HTTP Header Auth, name: Authorization, value: Bearer [GHL_API_KEY]"
     },
 
     {
       "parameters": {
-        "method": "PUT",
-        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "tags": ["follow-up-booked"],
-          "customField": {
-            "call_outcome": "follow_up_booked",
-            "follow_up_date": "={{ $json.follow_up_date }}",
-            "call_score": "={{ $json.score }}",
-            "call_summary": "={{ $json.summary }}",
-            "objections_raised": "={{ $json.objections.join(', ') }}"
-          }
-        },
-        "options": {}
-      },
-      "id": "node-ghl-followup",
-      "name": "GHL — Tag Follow-Up",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 260],
-      "notes": "FOLLOW-UP path"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_FOLLOWUP_WORKFLOW_ID]/enroll",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "contactId": "={{ $json.ghl_contact_id }}"
-        },
-        "options": {}
-      },
-      "id": "node-ghl-followup-seq",
-      "name": "GHL — Start Follow-Up Sequence",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1360, 260],
-      "notes": "Sends case study email + reminder SMS for the booked follow-up call"
-    },
-
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "model": "claude-sonnet-4-20250514",
-          "max_tokens": 400,
-          "messages": [
-            {
-              "role": "user",
-              "content": "Write a short, personalized follow-up email for a sales prospect who asked for more information on a sales call. They were interested but wanted to review more details first.\n\nAbout them:\n- Name: {{ $('Parse Claude Response').item.json.transcript.split(' ')[0] }}\n- Business type: from GHL\n- Objections raised: {{ $json.objections.join(', ') }}\n- Call summary: {{ $json.summary }}\n\nThe email should:\n- Reference something specific from the call\n- Include a link to our case study (https://[YOUR_DOMAIN]/case-study)\n- Include our ROI calculator link (https://[YOUR_DOMAIN]/roi)\n- Be 4-6 sentences max\n- Have a clear CTA: book a follow-up call\n- Subject line included at top as 'Subject: [subject]'\n\nReturn just the email, no preamble."
-            }
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.data.lead_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
-        "options": {}
-      },
-      "id": "node-claude-email",
-      "name": "Claude — Write Follow-Up Email",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 400],
-      "notes": "SEND INFO path — Claude writes a personalized follow-up"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "contentType": "json",
         "body": {
-          "html": "={{ $('Claude — Write Follow-Up Email').item.json.content[0].text }}"
+          "stage": "demo_booked",
+          "call_status": "demo_booked",
+          "demo_booked_at": "={{ new Date().toISOString() }}",
+          "notes": "={{ $json.data.analysis.summary }}"
         },
         "options": {}
       },
-      "id": "node-send-email",
-      "name": "GHL — Send Follow-Up Email",
+      "id": "node-sb-demo",
+      "name": "Supabase — Mark Demo Booked",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1360, 400]
+      "position": [2260, 260]
     },
 
     {
       "parameters": {
-        "method": "PUT",
-        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.data.lead_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
         "contentType": "json",
         "body": {
-          "tags": ["not-interested"],
-          "customField": {
-            "call_outcome": "not_interested",
-            "call_score": "1",
-            "call_summary": "={{ $json.summary }}"
-          }
+          "stage": "follow_up",
+          "call_status": "called",
+          "notes": "={{ $json.data.analysis.summary + ' | Next: ' + $json.data.analysis.next_step }}"
         },
         "options": {}
       },
-      "id": "node-ghl-dead",
-      "name": "GHL — Mark Not Interested",
+      "id": "node-sb-followup",
+      "name": "Supabase — Mark Follow-Up",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 540],
-      "notes": "DEAD path — remove from active sequences, do not contact for 90 days"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_REACTIVATION_WORKFLOW_ID]/enroll",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "contactId": "={{ $json.ghl_contact_id }}"
-        },
-        "options": {}
-      },
-      "id": "node-ghl-reactivate",
-      "name": "GHL — Schedule 90-Day Reactivation",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1360, 540],
-      "notes": "Enroll in 90-day wait → single follow-up sequence. \"Just checking if anything's changed\" email."
+      "position": [2260, 360]
     },
 
     {
       "parameters": {
-        "method": "PUT",
-        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.data.lead_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
         "contentType": "json",
         "body": {
-          "tags": ["no-answer"],
-          "customField": {
-            "call_outcome": "no_answer",
-            "retry_count": "={{ ($('Webhook — Retell Call Ended').item.json.metadata?.retry_count || 0) + 1 }}"
-          }
+          "stage": "disqualified",
+          "call_status": "called",
+          "notes": "Not interested. {{ $json.data.analysis.summary }}"
         },
         "options": {}
       },
-      "id": "node-ghl-noanswer-tag",
-      "name": "GHL — Tag No Answer",
+      "id": "node-sb-dead",
+      "name": "Supabase — Mark Not Interested",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 680],
-      "notes": "NO ANSWER path — retry cron in trigger workflow will pick this up"
+      "position": [2260, 460]
     },
+
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/sms",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?id=eq.{{ $json.data.lead_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
         "contentType": "json",
         "body": {
-          "message": "Hey {{ $json.prospect_name }}, this is Alex from [AGENCY_NAME] — I tried calling just now but missed you. You checked out our AI receptionist demo earlier — would love to connect for 10 mins. Here's a link to book a time that works: https://[YOUR_BOOKING_LINK]. Or just reply here!"
+          "call_status": "no_answer",
+          "notes": "No answer / voicemail. Retry cron will pick this up."
         },
         "options": {}
       },
-      "id": "node-sms-noanswer",
-      "name": "Send No-Answer SMS",
+      "id": "node-sb-noanswer",
+      "name": "Supabase — Mark No Answer",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1360, 680],
-      "notes": "Send an SMS since the call wasn't answered. More likely to get a response."
+      "position": [2260, 560]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data.analysis.appointment_booked }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "node-if-booked",
+      "name": "Appointment Booked?",
+      "type": "n8n-nodes-base.if",
+      "position": [2020, 580],
+      "notes": "If a patient appointment was booked during the call, trigger notification."
     },
 
     {
@@ -322,118 +441,105 @@
         "url": "https://hooks.slack.com/services/[YOUR_SLACK_WEBHOOK]",
         "contentType": "json",
         "body": {
-          "text": "🚨 WARM TRANSFER NEEDED — AI escalated a call. Contact: {{ $json.ghl_contact_id }}. Summary: {{ $json.summary }}. Action required: {{ $json.action_required }}. Check your phone NOW."
+          "text": "📅 *Patient appointment booked!*\nClient: {{ $json.data.client_id }}\nDetails: {{ JSON.stringify($json.data.analysis.appointment_details) }}\nSummary: {{ $json.data.analysis.summary }}"
         },
         "options": {}
       },
-      "id": "node-slack-escalate",
-      "name": "Slack — Urgent Escalation Alert",
+      "id": "node-slack-booked",
+      "name": "Slack — Appointment Notification",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 820],
-      "notes": "ESCALATED path — you need to join the call or call back immediately"
-    },
-
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "model": "claude-sonnet-4-20250514",
-          "max_tokens": 300,
-          "messages": [
-            {
-              "role": "user",
-              "content": "Based on this sales call transcript, identify the top 3 things the AI agent could have done better to improve the outcome. Be specific and actionable. Return as a JSON array of 3 strings.\n\nOutcome: {{ $json.outcome }}\nScore: {{ $json.score }}\nObjections: {{ $json.objections.join(', ') }}\nTranscript excerpt (last 500 chars): {{ $json.transcript.slice(-500) }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "node-claude-improve",
-      "name": "Claude — Generate Improvement Notes",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [900, 820],
-      "notes": "Runs on every call regardless of outcome — builds your weekly improvement report"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/notes",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "contentType": "json",
-        "body": {
-          "body": "CALL ANALYSIS\n\nOutcome: {{ $json.outcome }}\nScore: {{ $json.score }}/10\nSentiment: {{ $json.sentiment }}\nDuration: {{ Math.round($json.duration_seconds / 60) }} minutes\n\nSummary: {{ $json.summary }}\n\nObjections raised: {{ $json.objections.join(', ') }}\n\nAction required: {{ $json.action_required }}\n\nImprovement notes: {{ $('Claude — Generate Improvement Notes').item.json.content[0].text }}"
-        },
-        "options": {}
-      },
-      "id": "node-ghl-final-note",
-      "name": "GHL — Save Full Analysis Note",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1140, 960],
-      "notes": "Saves the full analysis to GHL for review. Runs on all calls."
+      "position": [2260, 520],
+      "notes": "Replace [YOUR_SLACK_WEBHOOK] with your actual Slack webhook URL.\nOr swap this for an email notification via GHL/Resend."
     }
+
   ],
+
   "connections": {
-    "Webhook — Retell Call Ended": {
-      "main": [[{ "node": "Claude — Analyze Call Transcript", "type": "main", "index": 0 }]]
+    "Webhook — Vapi Post-Call": {
+      "main": [[{ "node": "Verify & Extract Body", "type": "main", "index": 0 }]]
     },
-    "Claude — Analyze Call Transcript": {
-      "main": [[{ "node": "Parse Claude Response", "type": "main", "index": 0 }]]
+    "Verify & Extract Body": {
+      "main": [[{ "node": "Route by Layer", "type": "main", "index": 0 }]]
     },
-    "Parse Claude Response": {
-      "main": [[
-        { "node": "Route by Call Outcome", "type": "main", "index": 0 },
-        { "node": "Claude — Generate Improvement Notes", "type": "main", "index": 0 }
-      ]]
+    "Route by Layer": {
+      "sales": [[{ "node": "Claude — Analyze Sales Call (L1)", "type": "main", "index": 0 }]],
+      "client": [[{ "node": "Claude — Analyze Client Call (L2)", "type": "main", "index": 0 }]]
     },
-    "Route by Call Outcome": {
-      "payment": [[{ "node": "GHL — Tag as Won", "type": "main", "index": 0 }]],
-      "followup": [[{ "node": "GHL — Tag Follow-Up", "type": "main", "index": 0 }]],
-      "sendinfo": [[{ "node": "Claude — Write Follow-Up Email", "type": "main", "index": 0 }]],
-      "dead": [[{ "node": "GHL — Mark Not Interested", "type": "main", "index": 0 }]],
-      "noanswer": [[{ "node": "GHL — Tag No Answer", "type": "main", "index": 0 }]],
-      "escalated": [[{ "node": "Slack — Urgent Escalation Alert", "type": "main", "index": 0 }]]
+    "Claude — Analyze Sales Call (L1)": {
+      "main": [[{ "node": "Parse Sales Response (L1)", "type": "main", "index": 0 }]]
     },
-    "GHL — Tag as Won": {
-      "main": [[{ "node": "GHL — Create Won Deal", "type": "main", "index": 0 }]]
+    "Claude — Analyze Client Call (L2)": {
+      "main": [[{ "node": "Parse Client Response (L2)", "type": "main", "index": 0 }]]
     },
-    "GHL — Create Won Deal": {
-      "main": [[{ "node": "GHL — Start Onboarding Workflow", "type": "main", "index": 0 }]]
+    "Parse Sales Response (L1)": {
+      "main": [[{ "node": "Get Recording ID (L1)", "type": "main", "index": 0 }]]
     },
-    "GHL — Start Onboarding Workflow": {
-      "main": [[{ "node": "Slack — Celebrate Win", "type": "main", "index": 0 }]]
+    "Parse Client Response (L2)": {
+      "main": [[{ "node": "Get Recording ID (L2)", "type": "main", "index": 0 }]]
     },
-    "GHL — Tag Follow-Up": {
-      "main": [[{ "node": "GHL — Start Follow-Up Sequence", "type": "main", "index": 0 }]]
+    "Get Recording ID (L1)": {
+      "main": [[{ "node": "Prep L1 Upsert Data", "type": "main", "index": 0 }]]
     },
-    "Claude — Write Follow-Up Email": {
-      "main": [[{ "node": "GHL — Send Follow-Up Email", "type": "main", "index": 0 }]]
+    "Get Recording ID (L2)": {
+      "main": [[{ "node": "Prep L2 Upsert Data", "type": "main", "index": 0 }]]
     },
-    "GHL — Mark Not Interested": {
-      "main": [[{ "node": "GHL — Schedule 90-Day Reactivation", "type": "main", "index": 0 }]]
+    "Prep L1 Upsert Data": {
+      "main": [[{ "node": "Supabase — Save L1 Analysis", "type": "main", "index": 0 }]]
     },
-    "GHL — Tag No Answer": {
-      "main": [[{ "node": "Send No-Answer SMS", "type": "main", "index": 0 }]]
+    "Prep L2 Upsert Data": {
+      "main": [[{ "node": "Supabase — Save L2 Analysis", "type": "main", "index": 0 }]]
     },
-    "Claude — Generate Improvement Notes": {
-      "main": [[{ "node": "GHL — Save Full Analysis Note", "type": "main", "index": 0 }]]
+    "Supabase — Save L1 Analysis": {
+      "main": [[{ "node": "Route by Sales Outcome", "type": "main", "index": 0 }]]
+    },
+    "Supabase — Save L2 Analysis": {
+      "main": [[{ "node": "Appointment Booked?", "type": "main", "index": 0 }]]
+    },
+    "Route by Sales Outcome": {
+      "won":      [[{ "node": "Supabase — Mark Lead Won", "type": "main", "index": 0 }, { "node": "GHL — Tag as Won", "type": "main", "index": 0 }]],
+      "demo":     [[{ "node": "Supabase — Mark Demo Booked", "type": "main", "index": 0 }]],
+      "followup": [[{ "node": "Supabase — Mark Follow-Up", "type": "main", "index": 0 }]],
+      "sendinfo": [[{ "node": "Supabase — Mark Follow-Up", "type": "main", "index": 0 }]],
+      "dead":     [[{ "node": "Supabase — Mark Not Interested", "type": "main", "index": 0 }]],
+      "noanswer": [[{ "node": "Supabase — Mark No Answer", "type": "main", "index": 0 }]],
+      "other":    [[{ "node": "Supabase — Mark Follow-Up", "type": "main", "index": 0 }]]
+    },
+    "Appointment Booked?": {
+      "true":  [[{ "node": "Slack — Appointment Notification", "type": "main", "index": 0 }]],
+      "false": []
     }
   },
+
   "settings": { "executionOrder": "v1" },
+
   "_SETUP_NOTES": {
+    "description": "Post-call processing for both Layer 1 (AI sales calls) and Layer 2 (client AI receptionist calls).",
+    "webhook_url": "Set N8N_WEBHOOK_URL in Cloudflare to your lead-trigger URL. The post-call URL is derived automatically by vapi-webhook.js.",
+    "required_n8n_env_vars": [
+      "SUPABASE_URL — your Supabase project URL",
+      "SUPABASE_SERVICE_ROLE_KEY — Supabase service role key",
+      "N8N_WEBHOOK_SECRET — must match Cloudflare N8N_WEBHOOK_SECRET"
+    ],
+    "credentials_to_create": [
+      "Anthropic API — HTTP Header Auth, header: x-api-key, value: your Anthropic key. Also add header: anthropic-version = 2023-06-01",
+      "GHL API — HTTP Header Auth, header: Authorization, value: Bearer [YOUR_GHL_API_KEY]"
+    ],
     "placeholders_to_replace": [
-      "[YOUR_PIPELINE_ID] — from GHL pipelines",
-      "[YOUR_CLOSED_STAGE_ID] — from GHL pipeline stages",
-      "[YOUR_ONBOARDING_WORKFLOW_ID] — create this workflow in GHL first",
-      "[YOUR_FOLLOWUP_WORKFLOW_ID] — the nurture sequence",
-      "[YOUR_REACTIVATION_WORKFLOW_ID] — 90-day re-engage",
-      "[YOUR_SLACK_WEBHOOK] — optional, can replace with email",
-      "[YOUR_DOMAIN] — your agency website",
-      "[YOUR_BOOKING_LINK] — your GHL or Calendly booking URL"
-    ]
+      "[YOUR_SLACK_WEBHOOK] — Slack webhook URL (optional, can remove node if not using Slack)"
+    ],
+    "what_this_workflow_does": {
+      "layer1_sales_calls": [
+        "1. Claude analyzes transcript — extracts outcome, score, sentiment, objections, next steps",
+        "2. Saves analysis to call_transcripts table in Supabase",
+        "3. Updates lead stage in Supabase based on outcome",
+        "4. Tags contact in GHL for won deals",
+        "5. Routes to appropriate follow-up action"
+      ],
+      "layer2_client_calls": [
+        "1. Claude analyzes transcript — extracts summary, key moments, missed opportunities, coaching notes",
+        "2. Saves analysis to call_transcripts table (visible in client's Recordings dashboard)",
+        "3. If appointment was booked, sends Slack notification"
+      ]
+    }
   }
 }
