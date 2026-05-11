@@ -1,6 +1,6 @@
 // src/useSupabase.js
 // Data-fetching hooks for the dashboard.
-// Each hook falls back to empty/null while loading so components can show mock data.
+// Each hook falls back to null while loading so components can show mock data.
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 
@@ -37,7 +37,7 @@ export function fmtDate(iso) {
 
 // All active clients, sorted by MRR desc
 export function useClients() {
-  const [data, setData] = useState(null); // null = still loading
+  const [data, setData] = useState(null);
   useEffect(() => {
     supabase.from('clients')
       .select('id, name, contact_name, tier, mrr, calls_month, status, agent_status, since, city, created_at')
@@ -58,7 +58,7 @@ export function useClients() {
         })));
       });
   }, []);
-  return data; // null while loading
+  return data;
 }
 
 // Active leads for the pipeline (excludes won/disqualified)
@@ -105,7 +105,91 @@ export function useAdminStats() {
       });
     });
   }, []);
-  return stats; // null while loading
+  return stats;
+}
+
+// Analytics hook — real call, booking, and pipeline data for AdminAnalytics page
+export function useAnalyticsData() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    const since14 = new Date(); since14.setDate(since14.getDate() - 14);
+    const since30 = new Date(); since30.setDate(since30.getDate() - 30);
+    Promise.all([
+      supabase.from('recordings')
+        .select('started_at, outcome, call_status, duration_sec')
+        .gte('started_at', since14.toISOString()),
+      supabase.from('leads')
+        .select('stage, tier, created_at'),
+      supabase.from('clients')
+        .select('mrr, tier, status')
+        .eq('status', 'active'),
+      supabase.from('appointments')
+        .select('status, scheduled_at')
+        .gte('scheduled_at', since30.toISOString()),
+    ]).then(([recs, leads, clients, appts]) => {
+      const recordings = recs.data || [];
+      const leadsData  = leads.data || [];
+      const clientsData = clients.data || [];
+      const apptsData  = appts.data || [];
+
+      // ── Daily call volume (last 14 days, labelled D1–D14) ──────────
+      const dayMap = {};
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const label = `D${d.getDate()}`;
+        dayMap[key] = { d: label, calls: 0, booked: 0 };
+      }
+      recordings.forEach(r => {
+        const key = r.started_at?.slice(0, 10);
+        if (key && dayMap[key]) {
+          dayMap[key].calls++;
+          const isBooked = r.outcome === 'booked' || r.call_status === 'booked';
+          if (isBooked) dayMap[key].booked++;
+        }
+      });
+      const callTrend = Object.values(dayMap);
+
+      // ── Summary stats ───────────────────────────────────────────────
+      const totalCalls = recordings.length;
+      const booked14d  = recordings.filter(r => r.outcome === 'booked' || r.call_status === 'booked').length;
+      const bookingRate = totalCalls > 0 ? Math.round(booked14d / totalCalls * 100) : 0;
+      const totalDur   = recordings.reduce((s, r) => s + (r.duration_sec || 0), 0);
+      const avgDurSec  = totalCalls > 0 ? Math.round(totalDur / totalCalls) : 0;
+
+      // ── Lead pipeline breakdown ─────────────────────────────────────
+      const stageOrder = ['cold', 'demo', 'ai_called', 'hot', 'proposal'];
+      const stages = {};
+      leadsData.forEach(l => { stages[l.stage] = (stages[l.stage] || 0) + 1; });
+      const pipelineData = stageOrder
+        .filter(s => stages[s] > 0)
+        .map(s => ({ name: s.replace('_', ' '), value: stages[s] }));
+
+      // ── MRR breakdown ───────────────────────────────────────────────
+      const mrrByTier = { Starter: 0, Standard: 0, Premium: 0 };
+      clientsData.forEach(c => { mrrByTier[c.tier] = (mrrByTier[c.tier] || 0) + (c.mrr || 0); });
+      const totalMrr = Object.values(mrrByTier).reduce((s, v) => s + v, 0);
+
+      // ── Appointment stats ───────────────────────────────────────────
+      const confirmed30d = apptsData.filter(a => a.status === 'confirmed').length;
+      const noShows30d   = apptsData.filter(a => a.status === 'no_show').length;
+
+      setData({
+        callTrend,
+        totalCalls14d: totalCalls,
+        booked14d,
+        bookingRate,
+        avgDurSec,
+        pipelineData,
+        mrrByTier,
+        totalMrr,
+        appts30d:     apptsData.length,
+        confirmed30d,
+        noShows30d,
+      });
+    });
+  }, []);
+  return data;
 }
 
 // ─── CLIENT HOOKS ────────────────────────────────────────
@@ -161,7 +245,6 @@ export function useAppointments(clientId) {
   const [data, setData] = useState(null);
   useEffect(() => {
     if (!clientId) { setData([]); return; }
-    // Show upcoming + last 30 days
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
     supabase.from('appointments')
       .select('id, patient_name, phone, appointment_type, scheduled_at, status, notes')
