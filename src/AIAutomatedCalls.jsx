@@ -129,150 +129,98 @@ const TopBar=({page,role,onLogout})=>{const all=[...ADMIN_NAV,...CLIENT_NAV].fla
 // ─── ADMIN PAGES ──────────────────────────────────────────────
 
 const AdminOverview=()=>{
-  const stats = useAdminStats();
-  const s = stats || { activeClients:24, totalMrr:48200, pipelineLeads:31, callsToday:847 };
-  const liveClients = useClients();
-  const clients = liveClients ?? MOCK_CLIENTS;
+  const stats=useAdminStats();
+  const s=stats||{activeClients:24,totalMrr:48200,pipelineLeads:31,callsToday:847};
+  const liveClients=useClients();
+  const clients=liveClients??MOCK_CLIENTS;
   return(<div className="fade-in"><SH title="Agency Overview" sub="Live data · aiautomatedcalls.com" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:14,marginBottom:24}}><SC label="Active Clients" value={s.activeClients} sub={stats?"Live":"Loading…"} trend={stats?"up":null} Icon={Users} color="var(--accent)"/><SC label="Monthly Revenue" value={`$${s.totalMrr.toLocaleString()}`} sub={stats?"Live MRR":"Loading…"} trend={stats?"up":null} Icon={DollarSign} color="var(--success)"/><SC label="Calls Today" value={s.callsToday} sub={stats?"Via Vapi":"Loading…"} Icon={PhoneCall} color="var(--accent2)"/><SC label="Leads in Pipeline" value={s.pipelineLeads} sub={stats?"Active":"Loading…"} Icon={GitBranch} color="var(--warn)"/></div><div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:24}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Revenue Growth</div><ResponsiveContainer width="100%" height={180}><AreaChart data={REV}><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#1FA8A0" stopOpacity={0.2}/><stop offset="95%" stopColor="#1FA8A0" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Area type="monotone" dataKey="r" name="Revenue" stroke="var(--accent)" fill="url(#rg)" strokeWidth={2}/></AreaChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:12}}>Client Mix</div><ResponsiveContainer width="100%" height={110}><PieChart><Pie data={[{name:"Standard",value:clients.filter(c=>c.tier==="Standard").length||10},{name:"Premium",value:clients.filter(c=>c.tier==="Premium").length||8},{name:"Starter",value:clients.filter(c=>c.tier==="Starter").length||6}]} cx="50%" cy="50%" innerRadius={28} outerRadius={48} dataKey="value"><Cell fill="var(--accent)"/><Cell fill="var(--accent2)"/><Cell fill="var(--t3)"/></Pie><Tooltip content={<CT/>}/></PieChart></ResponsiveContainer>{[["Standard","var(--accent)"],["Premium","var(--accent2)"],["Starter","var(--t3)"]].map(([t,c])=>(<div key={t} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}><div style={{display:"flex",alignItems:"center",gap:6}}><Dot c={c}/><span style={{fontSize:12,color:"var(--t2)"}}>{t}</span></div><span style={{fontSize:12,fontWeight:600}}>{clients.filter(x=>x.tier===t).length}</span></div>))}</div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Clients{!liveClients&&<span style={{marginLeft:8,fontSize:11,color:"var(--t3)"}}>Loading…</span>}</div><table><thead><tr><th>Client</th><th>Tier</th><th>MRR</th><th>Status</th><th>Agent</th></tr></thead><tbody>{clients.slice(0,5).map(c=>(<tr key={c.id}><td><div style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td><td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td><td style={{fontWeight:600,color:"var(--t1)"}}>${(c.mrr||0).toLocaleString()}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td><td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td></tr>))}</tbody></table></div></div>);
 };
 
-// ─── AdminClients: live data + functional Add Client modal ────
 const AdminClients=()=>{
-  const liveClients = useClients();
+  const liveClients=useClients();
   const [q,setQ]=useState("");
   const [showAdd,setShowAdd]=useState(false);
   const [form,setForm]=useState({email:'',name:'',contact_name:'',city:'',tier:'Standard',mrr:'2000',phone:''});
   const [inviting,setInviting]=useState(false);
   const [result,setResult]=useState(null);
-
-  const clients = liveClients ?? MOCK_CLIENTS;
-  const list = clients.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.contact||'').toLowerCase().includes(q.toLowerCase()));
-
-  const BLANK = {email:'',name:'',contact_name:'',city:'',tier:'Standard',mrr:'2000',phone:''};
-
+  const clients=liveClients??MOCK_CLIENTS;
+  const list=clients.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.contact||'').toLowerCase().includes(q.toLowerCase()));
+  const BLANK={email:'',name:'',contact_name:'',city:'',tier:'Standard',mrr:'2000',phone:''};
   const handleInvite=async()=>{
     if(!form.email.trim()||!form.name.trim()){setResult({error:'Email and business name are required.'});return;}
     setInviting(true);setResult(null);
-    try{
-      const {data:{session}}=await supabase.auth.getSession();
-      if(!session){setResult({error:'Not authenticated.'});setInviting(false);return;}
-      const res=await fetch('/api/admin/invite-client',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},
-        body:JSON.stringify(form),
-      });
-      const data=await res.json();
-      setResult(data);
-      if(data.success){
-        setTimeout(()=>{setShowAdd(false);setResult(null);setForm(BLANK);},3000);
-      }
-    }catch(err){setResult({error:err.message||'Network error'});}
+    try{const {data:{session}}=await supabase.auth.getSession();if(!session){setResult({error:'Not authenticated.'});setInviting(false);return;}const res=await fetch('/api/admin/invite-client',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},body:JSON.stringify(form)});const data=await res.json();setResult(data);if(data.success)setTimeout(()=>{setShowAdd(false);setResult(null);setForm(BLANK);},3000);}catch(err){setResult({error:err.message||'Network error'});}
     setInviting(false);
   };
-
   return(
     <div className="fade-in">
-      <SH
-        title="Clients"
-        sub={liveClients?`${liveClients.length} clients`:"Loading…"}
-        action={<button className="btn btn-primary" onClick={()=>{setShowAdd(true);setResult(null);setForm(BLANK);}}><UserPlus size={13}/>Add Client</button>}
-      />
-      <div className="card" style={{marginBottom:16}}>
-        <div style={{display:"flex",gap:10}}>
-          <input placeholder="Search clients…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:1}}/>
-          <button className="btn btn-ghost"><Filter size={13}/>Filter</button>
-          <button className="btn btn-ghost"><Download size={13}/>Export</button>
-        </div>
-      </div>
-      <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <table>
-          <thead><tr><th>Business</th><th>Tier</th><th>MRR</th><th>Calls/Mo</th><th>Status</th><th>Agent</th><th>Since</th></tr></thead>
-          <tbody>
-            {list.length===0
-              ?<tr><td colSpan={7}><Empty msg="No clients yet. Click 'Add Client' to onboard your first one."/></td></tr>
-              :list.map(c=>(<tr key={c.id}>
-                  <td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.contact} · {c.city}</div></td>
-                  <td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td>
-                  <td style={{fontWeight:700,color:"var(--t1)"}}>${(c.mrr||0).toLocaleString()}</td>
-                  <td>{(c.calls||0).toLocaleString()}</td>
-                  <td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td>
-                  <td><Dot c={c.agent==="healthy"?"var(--success)":c.agent==="warn"?"var(--warn)":"var(--danger)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td>
-                  <td style={{color:"var(--t3)",fontSize:12}}>{c.since}</td>
-                </tr>))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Client Modal */}
-      {showAdd&&(
-        <div className="modal-overlay" onClick={()=>setShowAdd(false)}>
-          <div className="modal fade-in" onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div>
-                <div style={{fontSize:16,fontWeight:700}}>Add New Client</div>
-                <div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>Sends a login invite to their email address</div>
-              </div>
-              <button onClick={()=>setShowAdd(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={18}/></button>
-            </div>
-
-            <div style={{display:"grid",gap:12}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <div><label>Business Name *</label><input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Sunrise Dental" autoFocus/></div>
-                <div><label>Contact Name</label><input value={form.contact_name} onChange={e=>setForm(f=>({...f,contact_name:e.target.value}))} placeholder="Dr. Kim Park"/></div>
-              </div>
-              <div><label>Login Email * (they'll receive an invite here)</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="dr.park@sunrisedental.com"/></div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <div><label>City</label><input value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))} placeholder="Austin TX"/></div>
-                <div><label>Phone</label><input type="tel" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} placeholder="+1 (512) 000-0000"/></div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                <div><label>Plan Tier</label>
-                  <select value={form.tier} onChange={e=>setForm(f=>({...f,tier:e.target.value}))}>
-                    <option>Starter</option><option>Standard</option><option>Premium</option>
-                  </select>
-                </div>
-                <div><label>Monthly Retainer ($)</label><input type="number" value={form.mrr} onChange={e=>setForm(f=>({...f,mrr:e.target.value}))} min="0" step="100"/></div>
-              </div>
-
-              {result&&(
-                <div style={{padding:'10px 14px',borderRadius:8,fontSize:13,
-                  background:result.success?'var(--success-dim)':'var(--danger-dim)',
-                  border:`1px solid ${result.success?'rgba(5,150,105,.25)':'var(--danger)'}`,
-                  color:result.success?'var(--success)':'var(--danger)'}}>
-                  {result.success
-                    ?`✓ ${result.message}`
-                    :`✗ ${result.error}`}
-                </div>
-              )}
-
-              <button className="btn btn-primary" onClick={handleInvite} disabled={inviting||result?.success}
-                style={{justifyContent:"center",padding:"11px",fontSize:14,opacity:(inviting||result?.success)?0.75:1}}>
-                {inviting
-                  ?<><Loader size={14} className="aac-spin"/>Sending invite…</>
-                  :result?.success
-                    ?<><Check size={14}/>Invite sent!</>
-                    :<><Send size={14}/>Send Login Invite</>}
-              </button>
-              <div style={{fontSize:11,color:"var(--t3)",textAlign:"center",lineHeight:1.6}}>
-                Client receives an email to set their password.<br/>
-                Their portal + booking page will be ready immediately.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <SH title="Clients" sub={liveClients?`${liveClients.length} clients`:"Loading…"} action={<button className="btn btn-primary" onClick={()=>{setShowAdd(true);setResult(null);setForm(BLANK);}}><UserPlus size={13}/>Add Client</button>}/>
+      <div className="card" style={{marginBottom:16}}><div style={{display:"flex",gap:10}}><input placeholder="Search clients…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:1}}/><button className="btn btn-ghost"><Filter size={13}/>Filter</button><button className="btn btn-ghost"><Download size={13}/>Export</button></div></div>
+      <div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Business</th><th>Tier</th><th>MRR</th><th>Calls/Mo</th><th>Status</th><th>Agent</th><th>Since</th></tr></thead><tbody>{list.length===0?<tr><td colSpan={7}><Empty msg="No clients yet. Click 'Add Client' to onboard your first one."/></td></tr>:list.map(c=>(<tr key={c.id}><td><div style={{fontWeight:600,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.contact} · {c.city}</div></td><td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td><td style={{fontWeight:700,color:"var(--t1)"}}>${(c.mrr||0).toLocaleString()}</td><td>{(c.calls||0).toLocaleString()}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td><td><Dot c={c.agent==="healthy"?"var(--success)":c.agent==="warn"?"var(--warn)":"var(--danger)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td><td style={{color:"var(--t3)",fontSize:12}}>{c.since}</td></tr>))}</tbody></table></div>
+      {showAdd&&(<div className="modal-overlay" onClick={()=>setShowAdd(false)}><div className="modal fade-in" onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><div style={{fontSize:16,fontWeight:700}}>Add New Client</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>Sends a login invite to their email address</div></div><button onClick={()=>setShowAdd(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={18}/></button></div><div style={{display:"grid",gap:12}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name *</label><input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Sunrise Dental" autoFocus/></div><div><label>Contact Name</label><input value={form.contact_name} onChange={e=>setForm(f=>({...f,contact_name:e.target.value}))} placeholder="Dr. Kim Park"/></div></div><div><label>Login Email *</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="dr.park@sunrisedental.com"/></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>City</label><input value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))} placeholder="Austin TX"/></div><div><label>Phone</label><input type="tel" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} placeholder="+1 (512) 000-0000"/></div></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Plan Tier</label><select value={form.tier} onChange={e=>setForm(f=>({...f,tier:e.target.value}))}><option>Starter</option><option>Standard</option><option>Premium</option></select></div><div><label>Monthly Retainer ($)</label><input type="number" value={form.mrr} onChange={e=>setForm(f=>({...f,mrr:e.target.value}))} min="0" step="100"/></div></div>{result&&<div style={{padding:'10px 14px',borderRadius:8,fontSize:13,background:result.success?'var(--success-dim)':'var(--danger-dim)',border:`1px solid ${result.success?'rgba(5,150,105,.25)':'var(--danger)'}`,color:result.success?'var(--success)':'var(--danger)'}}>{result.success?`✓ ${result.message}`:`✗ ${result.error}`}</div>}<button className="btn btn-primary" onClick={handleInvite} disabled={inviting||result?.success} style={{justifyContent:"center",padding:"11px",fontSize:14,opacity:(inviting||result?.success)?0.75:1}}>{inviting?<><Loader size={14} className="aac-spin"/>Sending invite…</>:result?.success?<><Check size={14}/>Invite sent!</>:<><Send size={14}/>Send Login Invite</>}</button><div style={{fontSize:11,color:"var(--t3)",textAlign:"center",lineHeight:1.6}}>Client receives an email to set their password.<br/>Their portal + booking page will be ready immediately.</div></div></div></div>)}
     </div>
   );
 };
 
+// ─── AdminPipeline: async stage sync + Add Lead modal ─────────
 const AdminPipeline=()=>{
-  const liveLeads = useLeads();
+  const liveLeads=useLeads();
   const [leads,setLeads]=useState(null);
-  useEffect(()=>{if(liveLeads!==null) setLeads(liveLeads);},[liveLeads]);
-  const pipeline = leads ?? MOCK_LEADS;
+  const [showAdd,setShowAdd]=useState(false);
+  const [lf,setLf]=useState({business_name:'',contact_name:'',phone:'',email:'',city:'',niche:'',tier:'Standard'});
+  const [adding,setAdding]=useState(false);
+  const [lr,setLr]=useState(null);
+  const LB={business_name:'',contact_name:'',phone:'',email:'',city:'',niche:'',tier:'Standard'};
+  useEffect(()=>{if(liveLeads!==null)setLeads(liveLeads);},[liveLeads]);
+  const pipeline=leads??MOCK_LEADS;
   const STAGES=[{id:"cold",label:"Cold",c:"var(--t3)"},{id:"demo",label:"Demo",c:"var(--accent2)"},{id:"ai_called",label:"AI Called",c:"var(--accent)"},{id:"hot",label:"Hot 🔥",c:"var(--warn)"},{id:"proposal",label:"Proposal",c:"var(--success)"},{id:"won",label:"Won ✓",c:"var(--success)"}];
-  const move=(id,dir)=>{const ids=STAGES.map(s=>s.id);setLeads(ls=>(ls||MOCK_LEADS).map(l=>{if(l.id!==id)return l;const ci=ids.indexOf(l.stage);const ni=ci+dir;if(ni<0||ni>=ids.length)return l;return{...l,stage:ids[ni]};}));};
-  return(<div className="fade-in"><SH title="Lead Pipeline" sub={liveLeads?`${liveLeads.length} active leads · Live from Supabase`:"Loading live leads…"} action={<button className="btn btn-primary"><Plus size={13}/>Add Lead</button>}/><div style={{overflowX:"auto",paddingBottom:8}}><div style={{display:"flex",gap:12,minWidth:940}}>{STAGES.map((s,si)=>{const sl=pipeline.filter(l=>l.stage===s.id);return(<div key={s.id} style={{flex:"0 0 190px"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><span style={{fontSize:12,fontWeight:600,color:s.c}}>{s.label}</span><span style={{fontSize:11,color:"var(--t3)",background:"var(--bg-card2)",padding:"1px 7px",borderRadius:10}}>{sl.length}</span></div><div style={{display:"flex",flexDirection:"column",gap:8}}>{sl.length===0&&<div style={{padding:"12px",background:"var(--bg-card2)",borderRadius:8,fontSize:12,color:"var(--t3)",textAlign:"center"}}>Empty</div>}{sl.map(l=>(<div key={l.id} className="card-sm"><div style={{fontWeight:600,fontSize:13,color:"var(--t1)",marginBottom:2}}>{l.biz}</div><div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.name} · {l.city}</div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><Bdg type={l.tier==="Premium"?"info":l.tier==="Standard"?"success":"muted"} ch={l.tier}/><span style={{fontSize:11,color:"var(--t3)"}}>Score: <b style={{color:l.score>80?"var(--success)":l.score>60?"var(--warn)":"var(--t2)"}}>{l.score}</b></span></div><div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.last}</div><div style={{display:"flex",gap:4}}>{si>0&&<button className="btn btn-ghost" onClick={()=>move(l.id,-1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>←</button>}{si<STAGES.length-1&&<button className="btn btn-primary" onClick={()=>move(l.id,1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>→</button>}</div></div>))}</div></div>);})}</div></div></div>);
+
+  const move=async(id,dir)=>{
+    const ids=STAGES.map(s=>s.id);let ns=null;
+    setLeads(ls=>(ls||MOCK_LEADS).map(l=>{if(l.id!==id)return l;const ci=ids.indexOf(l.stage);const ni=ci+dir;if(ni<0||ni>=ids.length)return l;ns=ids[ni];return{...l,stage:ns};}));
+    if(ns){const {error}=await supabase.from('leads').update({stage:ns}).eq('id',id);if(error)console.error('Stage sync:',error.message);}
+  };
+
+  const addLead=async()=>{
+    if(!lf.business_name.trim()){setLr({error:'Business name required.'});return;}
+    setAdding(true);setLr(null);
+    const {data,error}=await supabase.from('leads').insert({business_name:lf.business_name.trim(),contact_name:lf.contact_name.trim()||null,phone:lf.phone.trim()||null,email:lf.email.trim()||null,city:lf.city.trim()||null,niche:lf.niche||null,tier:lf.tier||'Standard',stage:'cold',source:'manual',call_status:'not_called',score:50}).select('id').single();
+    if(error){setLr({error:error.message});setAdding(false);return;}
+    setLeads(p=>p?[{id:data.id,biz:lf.business_name.trim(),name:lf.contact_name||'',city:lf.city||'',score:50,tier:lf.tier,stage:'cold',last:'just now'},...p]:p);
+    setLr({success:true});setTimeout(()=>{setShowAdd(false);setLr(null);setLf(LB);},2000);setAdding(false);
+  };
+
+  return(
+    <div className="fade-in">
+      <SH title="Lead Pipeline" sub={liveLeads?`${liveLeads.length} active leads · Live`:"Loading live leads…"} action={<button className="btn btn-primary" onClick={()=>{setShowAdd(true);setLr(null);setLf(LB);}}><Plus size={13}/>Add Lead</button>}/>
+      <div style={{overflowX:"auto",paddingBottom:8}}>
+        <div style={{display:"flex",gap:12,minWidth:940}}>
+          {STAGES.map((s,si)=>{const sl=pipeline.filter(l=>l.stage===s.id);return(
+            <div key={s.id} style={{flex:"0 0 190px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                <span style={{fontSize:12,fontWeight:600,color:s.c}}>{s.label}</span>
+                <span style={{fontSize:11,color:"var(--t3)",background:"var(--bg-card2)",padding:"1px 7px",borderRadius:10}}>{sl.length}</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {sl.length===0&&<div style={{padding:"12px",background:"var(--bg-card2)",borderRadius:8,fontSize:12,color:"var(--t3)",textAlign:"center"}}>Empty</div>}
+                {sl.map(l=>(<div key={l.id} className="card-sm">
+                  <div style={{fontWeight:600,fontSize:13,color:"var(--t1)",marginBottom:2}}>{l.biz}</div>
+                  <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.name}{l.city?` · ${l.city}`:''}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><Bdg type={l.tier==="Premium"?"info":l.tier==="Standard"?"success":"muted"} ch={l.tier}/><span style={{fontSize:11,color:"var(--t3)"}}>Score: <b style={{color:l.score>80?"var(--success)":l.score>60?"var(--warn)":"var(--t2)"}}>{l.score}</b></span></div>
+                  <div style={{fontSize:11,color:"var(--t3)",marginBottom:8}}>{l.last}</div>
+                  <div style={{display:"flex",gap:4}}>
+                    {si>0&&<button className="btn btn-ghost" onClick={()=>move(l.id,-1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>←</button>}
+                    {si<STAGES.length-1&&<button className="btn btn-primary" onClick={()=>move(l.id,1)} style={{padding:"3px 6px",fontSize:11,flex:1}}>→</button>}
+                  </div>
+                </div>))}
+              </div>
+            </div>
+          );})}
+        </div>
+      </div>
+      {showAdd&&(<div className="modal-overlay" onClick={()=>setShowAdd(false)}><div className="modal fade-in" onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><div><div style={{fontSize:16,fontWeight:700}}>Add Lead</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>Manually add a prospect to the pipeline</div></div><button onClick={()=>setShowAdd(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={18}/></button></div><div style={{display:"grid",gap:12}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name *</label><input value={lf.business_name} onChange={e=>setLf(f=>({...f,business_name:e.target.value}))} placeholder="Sunrise Dental" autoFocus/></div><div><label>Contact Name</label><input value={lf.contact_name} onChange={e=>setLf(f=>({...f,contact_name:e.target.value}))} placeholder="Dr. Kim Park"/></div></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Phone</label><input type="tel" value={lf.phone} onChange={e=>setLf(f=>({...f,phone:e.target.value}))} placeholder="+1 (512) 000-0000"/></div><div><label>Email</label><input type="email" value={lf.email} onChange={e=>setLf(f=>({...f,email:e.target.value}))} placeholder="dr.park@gmail.com"/></div></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>City</label><input value={lf.city} onChange={e=>setLf(f=>({...f,city:e.target.value}))} placeholder="Austin TX"/></div><div><label>Niche</label><select value={lf.niche} onChange={e=>setLf(f=>({...f,niche:e.target.value}))}><option value="">Select…</option>{["Dental","Real Estate","HVAC","Med Spa","Law Firm","Chiropractic","Plumbing","Other"].map(n=><option key={n}>{n}</option>)}</select></div></div><div><label>Tier</label><div style={{display:"flex",gap:8,marginTop:4}}>{["Starter","Standard","Premium"].map(t=>(<button key={t} onClick={()=>setLf(f=>({...f,tier:t}))} className="btn" style={{flex:1,justifyContent:"center",fontSize:12,background:lf.tier===t?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${lf.tier===t?"var(--accent)":"var(--border)"}`,color:lf.tier===t?"var(--accent)":"var(--t2)"}}>{t}</button>))}</div></div>{lr&&<div style={{padding:'10px 14px',borderRadius:8,fontSize:13,background:lr.success?'var(--success-dim)':'var(--danger-dim)',border:`1px solid ${lr.success?'rgba(5,150,105,.25)':'var(--danger)'}`,color:lr.success?'var(--success)':'var(--danger)'}}>{lr.success?'✓ Added to Cold stage!':`✗ ${lr.error}`}</div>}<button className="btn btn-primary" onClick={addLead} disabled={adding||lr?.success} style={{justifyContent:"center",padding:"11px",fontSize:14,opacity:(adding||lr?.success)?0.75:1}}>{adding?<><Loader size={14} className="aac-spin"/>Adding…</>:lr?.success?<><Check size={14}/>Added!</>:<><Plus size={14}/>Add to Pipeline</>}</button><div style={{fontSize:11,color:"var(--t3)",textAlign:"center"}}>Appears in Cold immediately. Trigger the AI call from n8n.</div></div></div></div>)}
+    </div>
+  );
 };
 
 const AdminAnalytics=()=>(<div className="fade-in"><SH title="Analytics" sub="Revenue & growth intelligence"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14,marginBottom:24}}><SC label="Total MRR" value="$48,200" sub="↑10% MoM" trend="up" Icon={DollarSign} color="var(--success)"/><SC label="Avg Retainer" value="$2,008" Icon={TrendingUp} color="var(--accent)"/><SC label="Churn Rate" value="2.1%" Icon={Activity} color="var(--warn)"/><SC label="Client LTV" value="$28,400" Icon={Star} color="var(--accent2)"/></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Monthly Revenue</div><ResponsiveContainer width="100%" height={180}><BarChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Bar dataKey="r" name="Revenue" fill="var(--accent)" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Client Growth</div><ResponsiveContainer width="100%" height={180}><LineChart data={REV}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Line type="monotone" dataKey="c" name="Clients" stroke="var(--accent2)" strokeWidth={2} dot={{fill:"var(--accent2)",r:3}}/></LineChart></ResponsiveContainer></div></div></div>);
@@ -288,27 +236,26 @@ const AdminSettings=()=>(<div className="fade-in"><SH title="Agency Settings"/><
 // ─── CLIENT PAGES ─────────────────────────────────────────────
 
 const ClientDashboard=()=>{
-  const { clientName, clientData } = useClientContext();
-  const name = clientName || 'Your Business';
+  const {clientName,clientData}=useClientContext();
+  const name=clientName||'Your Business';
   return(<div className="fade-in"><SH title="Your AI Receptionist" sub={`${name} · Live data`}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:24}}><SC label="Calls This Month" value={clientData?.calls_month||312} sub="Via Vapi" Icon={PhoneCall} color="var(--accent)"/><SC label="Revenue Captured" value={clientData?.mrr?`$${(clientData.mrr*12).toLocaleString()}`:"$31,150"} sub="Est. ARR" Icon={DollarSign} color="var(--warn)"/><SC label="AI Uptime" value="99.8%" sub="Zero missed calls" Icon={Activity} color="var(--accent2)"/><SC label="Booking Page" value="Live" sub="Share with patients" Icon={Calendar} color="var(--success)"/></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Call Volume — Last 14 Days</div><ResponsiveContainer width="100%" height={180}><BarChart data={CALLS}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="d" tick={{fill:"var(--t3)",fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip content={<CT/>}/><Bar dataKey="calls" name="Total Calls" fill="var(--accent)" radius={[3,3,0,0]} opacity={0.7}/><Bar dataKey="booked" name="Booked" fill="var(--success)" radius={[3,3,0,0]}/></BarChart></ResponsiveContainer></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginTop:16}}><div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>This Week</div>{[["Calls handled","74",PhoneCall,"var(--accent)"],["Appointments booked","21",Calendar,"var(--success)"],["After-hours calls","28",Clock,"var(--warn)"],["No-shows recovered","5",RefreshCw,"var(--accent2)"]].map(([l,v,Ic,c])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid var(--border)"}}><div style={{display:"flex",alignItems:"center",gap:7,color:"var(--t2)",fontSize:13}}><Ic size={13} color={c}/>{l}</div><span style={{fontWeight:700,color:"var(--t1)"}}>{v}</span></div>))}</div><div className="card"><div style={{fontSize:13,fontWeight:600,marginBottom:12}}>Agent Status</div><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}><div style={{width:9,height:9,borderRadius:"50%",background:"var(--success)",animation:"pulse 2s ease infinite"}}/><span style={{fontSize:13,color:"var(--success)",fontWeight:600}}>Live & Healthy</span></div>{[["Voice","Brian · eleven_flash_v2_5"],["Model","GPT-4o via Vapi"],["Calendar","Native booking"],["Plan",clientData?.tier||"Standard"]].map(([l,v])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid var(--border)"}}><span style={{fontSize:12,color:"var(--t3)"}}>{l}</span><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{v}</span></div>))}</div></div></div>);
 };
 
 const ClientRecordings=()=>{
-  const { clientId } = useClientContext();
-  const liveRecs = useRecordings(clientId);
-  const recs = liveRecs ?? MOCK_RECS;
+  const {clientId}=useClientContext();
+  const liveRecs=useRecordings(clientId);
+  const recs=liveRecs??MOCK_RECS;
   const [sel,setSel]=useState(null);
   return(<div className="fade-in"><SH title="Call Recordings" sub={liveRecs?`${liveRecs.length} calls · All transcribed by AI`:"Loading recordings…"}/><div style={{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}}><div style={{display:"flex",flexDirection:"column",gap:10}}>{recs.length===0&&<Empty msg="No recordings yet — calls will appear here once Vapi is connected."/>}{recs.map(r=>(<div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(31,168,160,.04)":"var(--bg-card)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div style={{display:"flex",alignItems:"center",gap:8}}>{r.type==="inbound"?<PhoneIncoming size={14} color="var(--success)"/>:<PhoneCall size={14} color="var(--accent)"/>}<span style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{r.from}</span></div><Bdg type={r.outcome==="booked"?"success":r.outcome==="voicemail"?"warn":r.outcome==="completed"?"info":"muted"} ch={r.outcome}/></div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,color:"var(--t3)"}}>{r.time}</span><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,color:"var(--t3)"}}><Clock size={11}/> {r.dur}</span>{r.url&&<button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}} onClick={e=>{e.stopPropagation();window.open(r.url,'_blank');}}><Play size={11}/>Play</button>}</div></div></div>))}</div>{sel&&(<div className="card fade-in" style={{alignSelf:"flex-start",position:"sticky",top:"calc(var(--topbar-h) + 16px)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}><div><div style={{fontWeight:700,fontSize:14}}>{sel.from}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{sel.time} · {sel.dur}</div></div><button onClick={()=>setSel(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={16}/></button></div><div style={{display:"flex",gap:8,marginBottom:14}}><Bdg type={sel.outcome==="booked"?"success":"info"} ch={sel.outcome}/><Bdg type="muted" ch={sel.type}/></div><div style={{background:"var(--bg-card2)",borderRadius:8,padding:14,marginBottom:12}}><div style={{fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Transcript</div><div style={{fontSize:13,lineHeight:1.75}}>{(sel.tx||'').split("\n").map((line,i)=>{const ai=line.startsWith("[AI]");return<div key={i} style={{marginBottom:4,color:ai?"var(--accent)":"var(--t2)",fontWeight:ai?600:400}}>{line}</div>;})}</div></div>{sel.url&&<button className="btn btn-primary" style={{width:"100%",justifyContent:"center",fontSize:12}} onClick={()=>window.open(sel.url,'_blank')}><Play size={12}/>Play Audio</button>}</div>)}</div></div>);
 };
 
 const ClientAppointments=()=>{
-  const { clientId } = useClientContext();
-  const liveAppts = useAppointments(clientId);
-  const appts = liveAppts ?? MOCK_APPTS;
+  const {clientId}=useClientContext();
+  const liveAppts=useAppointments(clientId);
+  const appts=liveAppts??MOCK_APPTS;
   return(<div className="fade-in"><SH title="Appointments" sub={liveAppts?`${liveAppts.length} upcoming/recent`:"Loading appointments…"}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}><SC label="Total" value={appts.length} Icon={Calendar} color="var(--accent)"/><SC label="Confirmed" value={appts.filter(a=>a.status==="confirmed").length} Icon={CheckCircle} color="var(--success)"/><SC label="Pending" value={appts.filter(a=>a.status==="pending").length} Icon={Clock} color="var(--warn)"/><SC label="No-Shows" value={appts.filter(a=>a.status==="no_show").length} Icon={PhoneMissed} color="var(--danger)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}>{appts.length===0?<Empty msg="No appointments yet — they'll appear here once patients book via your booking page."/>:<table><thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Phone</th></tr></thead><tbody>{appts.map(a=>(<tr key={a.id}><td style={{fontWeight:600,color:"var(--t1)"}}>{a.name}</td><td>{a.date}</td><td style={{fontSize:12}}>{a.type}</td><td><Bdg type={a.status==="confirmed"?"success":a.status==="pending"?"warn":"muted"} ch={a.status}/></td><td style={{fontSize:12,color:"var(--t3)"}}>{a.phone}</td></tr>))}</tbody></table>}</div></div>);
 };
 
-// ─── AVAILABILITY MANAGER ─────────────────────────────────────
 const ClientAvailability=()=>{
   const DAYS=[{d:0,label:"Sunday"},{d:1,label:"Monday"},{d:2,label:"Tuesday"},{d:3,label:"Wednesday"},{d:4,label:"Thursday"},{d:5,label:"Friday"},{d:6,label:"Saturday"}];
   const DEFAULT={0:{active:false,start:"09:00",end:"17:00"},1:{active:true,start:"09:00",end:"18:00"},2:{active:true,start:"09:00",end:"18:00"},3:{active:true,start:"09:00",end:"18:00"},4:{active:true,start:"09:00",end:"18:00"},5:{active:true,start:"09:00",end:"18:00"},6:{active:true,start:"10:00",end:"15:00"}};
@@ -372,7 +319,6 @@ const ClientBilling=()=>(<div className="fade-in"><SH title="Billing" sub="Stand
 
 const ClientSettings=()=>{const [saved,setSaved]=useState(false);return(<div className="fade-in"><SH title="Settings" sub="Configure your AI receptionist"/><div style={{display:"grid",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Information</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name</label><input defaultValue="Sunrise Dental"/></div><div><label>Phone Number</label><input defaultValue="+1 (512) 884-2211"/></div><div><label>Address</label><input defaultValue="2420 S Lamar Blvd, Austin TX"/></div><div><label>Website</label><input defaultValue="sunrisedental.com"/></div></div></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>AI Agent Settings</div><div style={{display:"grid",gap:12}}><div><label>Agent Voice</label><select><option>Brian (Professional, Male) · ElevenLabs Flash</option></select></div><div><label>Greeting Message</label><textarea defaultValue="Thank you for calling! This is your AI assistant. How can I help?" rows={3}/></div></div></div><button className="btn btn-primary" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}} style={{justifyContent:"center",padding:"10px",fontSize:14}}>{saved?<><Check size={14}/>Saved!</>:"Save Changes"}</button></div></div>);};
 
-// ─── MARKETING PAGE ───────────────────────────────────────────
 const MarketingPage=({onGetStarted})=>{
   const [form,setForm]=useState({name:'',phone:'',business_type:''});
   const [submitStatus,setSubmitStatus]=useState('idle');
@@ -428,7 +374,6 @@ const MarketingPage=({onGetStarted})=>{
   );
 };
 
-// ─── LOGIN PAGE ───────────────────────────────────────────────
 const LoginPage=({onLogin})=>{
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
@@ -466,7 +411,6 @@ const PAGES={
   availability:<ClientAvailability/>,billing:<ClientBilling/>,csettings:<ClientSettings/>,
 };
 
-// ─── APP ROOT ─────────────────────────────────────────────────
 export default function App(){
   const [screen,setScreen]=useState('loading');
   const [role,setRole]=useState(null);
