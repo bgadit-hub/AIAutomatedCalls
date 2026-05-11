@@ -6,6 +6,8 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
+import logoFull from "../assets/logos/logo-primary.png";
+import logoIcon from "../assets/logos/logo-teal-light.png";
 import {
   LayoutDashboard, Users, GitBranch, BarChart3, Bot, Zap, Megaphone,
   Settings, Mic, Calendar, CreditCard, PhoneCall, PhoneIncoming,
@@ -23,14 +25,14 @@ import {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 :root {
-  --bg-deep:#04070f; --bg-base:#080d1a; --bg-card:#0e1525; --bg-card2:#111d2e;
-  --bg-hover:#152033; --bg-sidebar:#04070f;
-  --border:rgba(255,255,255,0.055); --border2:rgba(255,255,255,0.10);
-  --accent:#38bdf8; --accent2:#818cf8; --accent-dim:rgba(56,189,248,0.10);
-  --success:#10b981; --success-dim:rgba(16,185,129,0.10);
-  --warn:#f59e0b; --warn-dim:rgba(245,158,11,0.10);
-  --danger:#f43f5e; --danger-dim:rgba(244,63,94,0.10);
-  --t1:#f0f6ff; --t2:#8da4bf; --t3:#3d5472;
+  --bg-deep:#F0F2F5; --bg-base:#F0F2F5; --bg-card:#FFFFFF; --bg-card2:#F9FAFB;
+  --bg-hover:#F3F4F6; --bg-sidebar:#FFFFFF;
+  --border:rgba(0,0,0,0.07); --border2:rgba(0,0,0,0.12);
+  --accent:#1FA8A0; --accent2:#3D7BD9; --accent-dim:rgba(31,168,160,0.10);
+  --success:#059669; --success-dim:rgba(5,150,105,0.10);
+  --warn:#D97706; --warn-dim:rgba(217,119,6,0.10);
+  --danger:#DC2626; --danger-dim:rgba(220,38,38,0.10);
+  --t1:#111827; --t2:#6B7280; --t3:#9CA3AF;
   --r:10px; --rs:6px; --rl:16px;
   --font:'Outfit',sans-serif;
   --sidebar-w:228px; --sidebar-c:56px; --topbar-h:58px;
@@ -39,7 +41,7 @@ const CSS = `
 body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-x:hidden;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.15);border-radius:4px;}
+::-webkit-scrollbar-thumb{background:rgba(31,168,160,0.20);border-radius:4px;}
 
 /* ═══════════════════════════════════════════════════════════
    EnvoyGlobe NAV SYSTEM — adapted for aac- prefix
@@ -48,7 +50,7 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 .aac-sidebar{will-change:width;transition:width .22s cubic-bezier(.4,0,.2,1);}
 .aac-main{will-change:margin-left;transition:margin-left .22s cubic-bezier(.4,0,.2,1);}
 .aac-sidebar-nav::-webkit-scrollbar{width:3px;}
-.aac-sidebar-nav::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.15);border-radius:2px;}
+.aac-sidebar-nav::-webkit-scrollbar-thumb{background:rgba(31,168,160,0.20);border-radius:2px;}
 /* Mobile elements HIDDEN on desktop by default */
 .aac-mobile-nav{display:none!important;}
 .aac-mobile-spacer{display:none!important;}
@@ -71,7 +73,7 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 .aac-spin{animation:spin .8s linear infinite;}
 
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
-.btn-primary{background:var(--accent);color:#00111f;}.btn-primary:hover{filter:brightness(1.08);}
+.btn-primary{background:var(--accent);color:#FFFFFF;}.btn-primary:hover{filter:brightness(1.08);}
 .btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--border2);}.btn-ghost:hover{background:var(--bg-hover);color:var(--t1);}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;}
 .bdg-success{background:var(--success-dim);color:var(--success);}
@@ -79,7 +81,7 @@ body{font-family:var(--font);background:var(--bg-base);color:var(--t1);overflow-
 .bdg-danger{background:var(--danger-dim);color:var(--danger);}
 .bdg-info{background:var(--accent-dim);color:var(--accent);}
 .bdg-muted{background:rgba(255,255,255,.05);color:var(--t2);}
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
 .card-sm{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
 input,select,textarea{background:var(--bg-card2);border:1px solid var(--border2);border-radius:var(--rs);color:var(--t1);font-family:var(--font);font-size:13px;padding:8px 12px;outline:none;width:100%;}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);}
@@ -140,9 +142,11 @@ const Sidebar=({col,setCol,page,setPage,role})=>{
   return(
     <aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}>
       {/* Logo */}
-      <div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 20px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0,gap:10}}>
-        <div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 0 16px rgba(56,189,248,.38)"}}><Radio size={16} color="#00111f"/></div>
-        {!col&&<div><div style={{fontSize:13,fontWeight:700,color:"var(--t1)",lineHeight:1.2}}>AI Automated</div><div style={{fontSize:10,color:"var(--accent)",fontWeight:500,letterSpacing:".04em"}}>CALLS · aiautomatedcalls.com</div></div>}
+      <div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        {col
+          ? <img src={logoIcon} alt="AI Automated Calls" style={{width:32,height:32,objectFit:"contain"}}/>
+          : <img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>
+        }
       </div>
       {/* Nav */}
       <nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>
@@ -153,7 +157,7 @@ const Sidebar=({col,setCol,page,setPage,role})=>{
               const active=page===item.id;
               return(
                 <button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined}
-                  style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(56,189,248,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}>
+                  style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}>
                   <item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>
                   {!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}
                   {col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}
@@ -628,7 +632,7 @@ const ClientRecordings=()=>{
       <div style={{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}}>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {RECS.map(r=>(
-            <div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(56,189,248,.04)":"var(--bg-card)"}}>
+            <div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(31,168,160,.04)":"var(--bg-card)"}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {r.type==="inbound"?<PhoneIncoming size={14} color="var(--success)"/>:<PhoneCall size={14} color="var(--accent)"/>}
@@ -706,7 +710,7 @@ const ClientBilling=()=>(
   <div className="fade-in">
     <SH title="Billing" sub="Standard Plan · Active"/>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
-      <div className="card" style={{background:"linear-gradient(135deg,rgba(56,189,248,.07),rgba(129,140,248,.05))",border:"1px solid rgba(56,189,248,.14)"}}>
+      <div className="card" style={{background:"linear-gradient(135deg,rgba(31,168,160,.07),rgba(129,140,248,.05))",border:"1px solid rgba(31,168,160,.14)"}}>
         <div style={{fontSize:11,color:"var(--accent)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Current Plan</div>
         <div style={{fontSize:28,fontWeight:800,marginBottom:4}}>Standard</div>
         <div style={{fontSize:18,fontWeight:600,color:"var(--accent)",marginBottom:16}}>$2,000<span style={{fontSize:13,color:"var(--t3)"}}>/month</span></div>
@@ -771,13 +775,12 @@ const ClientSettings=()=>{
 const LoginPage=({onLogin})=>{
   const [role,setRole]=useState("admin");
   return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-deep)",padding:24,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:"22%",left:"50%",transform:"translateX(-50%)",width:560,height:260,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(56,189,248,.06) 0%,transparent 70%)",pointerEvents:"none"}}/>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:"22%",left:"50%",transform:"translateX(-50%)",width:560,height:260,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(31,168,160,.06) 0%,transparent 70%)",pointerEvents:"none"}}/>
       <div style={{width:"100%",maxWidth:380}}>
         <div style={{textAlign:"center",marginBottom:32}}>
-          <div style={{width:54,height:54,borderRadius:14,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",boxShadow:"0 0 32px rgba(56,189,248,.42)"}}><Radio size={24} color="#00111f"/></div>
-          <h1 style={{fontSize:23,fontWeight:800,letterSpacing:"-.02em"}}>AI Automated Calls</h1>
-          <p style={{fontSize:13,color:"var(--t3)",marginTop:5}}>aiautomatedcalls.com</p>
+          <img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/>
+          <p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p>
         </div>
         <div className="card">
           <div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg-card2)",borderRadius:8,padding:4}}>
