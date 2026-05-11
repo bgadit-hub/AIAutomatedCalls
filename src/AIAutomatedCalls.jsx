@@ -14,7 +14,7 @@ import {
   PhoneMissed, ChevronLeft, ChevronRight, Bell, TrendingUp,
   CheckCircle, AlertCircle, Clock, ArrowUpRight, Play, Download,
   Filter, Plus, Eye, RefreshCw, DollarSign, Activity, MoreHorizontal,
-  Sparkles, Target, Send, Copy, Check, X, Shield, Radio, Layers, Star
+  Sparkles, Target, Send, Copy, Check, X, Shield, Radio, Layers, Star, Link
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -85,6 +85,12 @@ tr:hover td{background:var(--bg-hover);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
 .modal{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--rl);padding:28px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;}
 .tt{background:var(--bg-card2);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--t1);}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:11px;cursor:pointer;transition:background .15s;}
+.toggle input:checked+.toggle-track{background:var(--accent);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .15s;pointer-events:none;}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px);}
 `;
 
 const REV=[{m:"Jun",r:12400,c:5},{m:"Jul",r:18200,c:7},{m:"Aug",r:24600,c:10},{m:"Sep",r:29800,c:13},{m:"Oct",r:35400,c:16},{m:"Nov",r:40200,c:19},{m:"Dec",r:44800,c:22},{m:"Jan",r:48200,c:24}];
@@ -96,7 +102,7 @@ const AUTOS=[{id:1,name:"Lead Trigger → Vapi Sales Call",desc:"Form submit →
 const ADS=[{id:1,plat:"📘 Meta",name:"Dental Offices — Austin",status:"active",spend:18.40,imp:4820,clicks:142,leads:7,cpl:2.63},{id:2,plat:"🔵 Google",name:"AI Receptionist — Phoenix",status:"active",spend:24.10,imp:3210,clicks:198,leads:11,cpl:2.19},{id:3,plat:"💼 LinkedIn",name:"Med Spa Owners — Miami",status:"paused",spend:31.00,imp:1840,clicks:87,leads:5,cpl:6.20},{id:4,plat:"📘 Meta",name:"Law Firms — LA",status:"active",spend:12.80,imp:2940,clicks:109,leads:4,cpl:3.20}];
 
 const ADMIN_NAV=[{group:"Main",items:[{id:"overview",label:"Overview",Icon:LayoutDashboard},{id:"clients",label:"Clients",Icon:Users,badge:24},{id:"pipeline",label:"Lead Pipeline",Icon:GitBranch,badge:8,bdgType:"warn"}]},{group:"Intelligence",items:[{id:"analytics",label:"Analytics",Icon:BarChart3},{id:"agents",label:"AI Agents",Icon:Bot},{id:"automations",label:"Automations",Icon:Zap}]},{group:"Growth",items:[{id:"social",label:"Social Ads",Icon:Megaphone,badge:"NEW",bdgType:"info"}]},{group:"System",items:[{id:"settings",label:"Settings",Icon:Settings}]}];
-const CLIENT_NAV=[{group:"Main",items:[{id:"cdash",label:"Dashboard",Icon:LayoutDashboard},{id:"recordings",label:"Call Recordings",Icon:Mic,badge:312},{id:"appointments",label:"Appointments",Icon:Calendar}]},{group:"Account",items:[{id:"billing",label:"Billing",Icon:CreditCard},{id:"csettings",label:"Settings",Icon:Settings}]}];
+const CLIENT_NAV=[{group:"Main",items:[{id:"cdash",label:"Dashboard",Icon:LayoutDashboard},{id:"recordings",label:"Call Recordings",Icon:Mic,badge:312},{id:"appointments",label:"Appointments",Icon:Calendar}]},{group:"Account",items:[{id:"availability",label:"Availability",Icon:Clock},{id:"billing",label:"Billing",Icon:CreditCard},{id:"csettings",label:"Settings",Icon:Settings}]}];
 const A_PRI=["overview","clients","analytics","social"];
 const C_PRI=["cdash","recordings","appointments","billing"];
 
@@ -105,6 +111,15 @@ const Dot=({c})=><span style={{width:7,height:7,borderRadius:"50%",background:c,
 const CT=({active,payload,label})=>active&&payload?.length?(<div className="tt"><div style={{color:"var(--t3)",marginBottom:4,fontSize:11}}>{label}</div>{payload.map((p,i)=><div key={i} style={{color:p.color||"var(--accent)",fontWeight:600,fontSize:12}}>{p.name}: {p.name?.toLowerCase().includes("r")?`$${p.value?.toLocaleString()}`:p.value}</div>)}</div>):null;
 const SC=({label,value,sub,trend,Icon,color="var(--accent)"})=>(<div className="card fade-in" style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{label}</span>{Icon&&<div style={{width:32,height:32,borderRadius:8,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon size={15} color={color}/></div>}</div><div><div style={{fontSize:26,fontWeight:700,letterSpacing:"-.02em",color:"var(--t1)"}}>{value}</div>{sub&&<div style={{fontSize:12,marginTop:4,display:"flex",alignItems:"center",gap:4,color:trend==="up"?"var(--success)":trend==="dn"?"var(--danger)":"var(--t3)"}}>{trend==="up"&&<ArrowUpRight size={11}/>}{sub}</div>}</div></div>);
 const SH=({title,sub,action})=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h2 style={{fontSize:17,fontWeight:700,color:"var(--t1)"}}>{title}</h2>{sub&&<p style={{fontSize:13,color:"var(--t2)",marginTop:3}}>{sub}</p>}</div>{action}</div>);
+
+// Simple toggle switch component
+const Toggle=({checked,onChange})=>(
+  <label className="toggle">
+    <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/>
+    <span className="toggle-track"/>
+    <span className="toggle-thumb"/>
+  </label>
+);
 
 const Sidebar=({col,setCol,page,setPage,role})=>{const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;return(<aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}><div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>{col?<img src={logoIcon} alt="logo" style={{width:32,height:32,objectFit:"contain"}}/>:<img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>}</div><nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>{nav.map(g=>(<div key={g.group} style={{marginBottom:2}}>{!col&&<div style={{fontSize:10,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:".08em",padding:"8px 20px 4px"}}>{g.group}</div>}{g.items.map(item=>{const active=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}><item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>{!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}{col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}</button>);})}</div>))}</nav>{!col&&<div style={{padding:"12px 16px",borderTop:"1px solid var(--border)"}}><div style={{background:"var(--bg-card2)",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:6,background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><Shield size={13} color="var(--accent)"/></div><div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{role==="admin"?"Agency Admin":"Sunrise Dental"}</div><div style={{fontSize:11,color:"var(--t3)"}}>{role==="admin"?"aiautomatedcalls.com":"Client portal"}</div></div></div></div>}<button onClick={()=>setCol(c=>!c)} style={{height:40,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderTop:"1px solid var(--border)",cursor:"pointer",color:"var(--t3)",flexShrink:0}} title={col?"Expand":"Collapse"}>{col?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}</button></aside>);};
 
@@ -133,6 +148,179 @@ const ClientDashboard=()=>(<div className="fade-in"><SH title="Your AI Reception
 const ClientRecordings=()=>{const [sel,setSel]=useState(null);return(<div className="fade-in"><SH title="Call Recordings" sub="312 calls this month · All transcribed by AI"/><div style={{display:"grid",gridTemplateColumns:sel?"1fr 1fr":"1fr",gap:14}}><div style={{display:"flex",flexDirection:"column",gap:10}}>{RECS.map(r=>(<div key={r.id} className="card" onClick={()=>setSel(r)} style={{cursor:"pointer",border:`1px solid ${sel?.id===r.id?"var(--accent)":"var(--border)"}`,background:sel?.id===r.id?"rgba(31,168,160,.04)":"var(--bg-card)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div style={{display:"flex",alignItems:"center",gap:8}}>{r.type==="inbound"?<PhoneIncoming size={14} color="var(--success)"/>:<PhoneCall size={14} color="var(--accent)"/>}<span style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{r.from}</span></div><Bdg type={r.outcome==="booked"?"success":r.outcome==="callback"?"warn":"info"} ch={r.outcome}/></div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,color:"var(--t3)"}}>{r.time}</span><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,color:"var(--t3)"}}><Clock size={11}/> {r.dur}</span><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}} onClick={e=>e.stopPropagation()}><Play size={11}/>Play</button></div></div></div>))}</div>{sel&&(<div className="card fade-in" style={{alignSelf:"flex-start",position:"sticky",top:"calc(var(--topbar-h) + 16px)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}><div><div style={{fontWeight:700,fontSize:14}}>{sel.from}</div><div style={{fontSize:12,color:"var(--t3)",marginTop:2}}>{sel.time} · {sel.dur}</div></div><button onClick={()=>setSel(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)"}}><X size={16}/></button></div><div style={{display:"flex",gap:8,marginBottom:14}}><Bdg type={sel.outcome==="booked"?"success":"info"} ch={sel.outcome}/><Bdg type="muted" ch={sel.type}/></div><div style={{background:"var(--bg-card2)",borderRadius:8,padding:14,marginBottom:12}}><div style={{fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Transcript</div><div style={{fontSize:13,lineHeight:1.75}}>{sel.tx.split("\n").map((line,i)=>{const ai=line.startsWith("[AI]");return<div key={i} style={{marginBottom:4,color:ai?"var(--accent)":"var(--t2)",fontWeight:ai?600:400}}>{line}</div>;})}</div></div><div style={{display:"flex",gap:8}}><button className="btn btn-ghost" style={{flex:1,justifyContent:"center",fontSize:12}}><Download size={12}/>Export</button><button className="btn btn-primary" style={{flex:1,justifyContent:"center",fontSize:12}}><Play size={12}/>Play Audio</button></div></div>)}</div></div>);};
 
 const ClientAppointments=()=>{const A=[{id:1,name:"Jennifer Walsh",date:"Today 3:00 PM",type:"New Patient — Cleaning",status:"confirmed",phone:"(512) 441-2211"},{id:2,name:"Marcus Kim",date:"Today 4:30 PM",type:"Emergency — Toothache",status:"confirmed",phone:"(512) 773-5521"},{id:3,name:"Priya Patel",date:"Tomorrow 10:00 AM",type:"Follow-up — Filling",status:"pending",phone:"(512) 334-8814"},{id:4,name:"David Chen",date:"Tomorrow 2:00 PM",type:"New Patient — Consult",status:"confirmed",phone:"(512) 226-9982"},{id:5,name:"Sarah Johnson",date:"Jun 6 · 11:00 AM",type:"Cleaning",status:"confirmed",phone:"(512) 889-1140"}];return(<div className="fade-in"><SH title="Appointments" sub="Booked automatically by your AI receptionist"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}><SC label="This Week" value="21" Icon={Calendar} color="var(--accent)"/><SC label="Pending Confirm" value="3" Icon={Clock} color="var(--warn)"/><SC label="No-Shows" value="2" Icon={PhoneMissed} color="var(--danger)"/><SC label="Recovered" value="1" sub="via AI re-book" Icon={RefreshCw} color="var(--success)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Phone</th></tr></thead><tbody>{A.map(a=>(<tr key={a.id}><td style={{fontWeight:600,color:"var(--t1)"}}>{a.name}</td><td>{a.date}</td><td style={{fontSize:12}}>{a.type}</td><td><Bdg type={a.status==="confirmed"?"success":"warn"} ch={a.status}/></td><td style={{fontSize:12,color:"var(--t3)"}}>{a.phone}</td></tr>))}</tbody></table></div></div>);};
+
+// ─── AVAILABILITY MANAGER ─────────────────────────────────────
+const ClientAvailability=()=>{
+  const DAYS=[
+    {d:0,label:"Sunday",short:"Sun"},
+    {d:1,label:"Monday",short:"Mon"},
+    {d:2,label:"Tuesday",short:"Tue"},
+    {d:3,label:"Wednesday",short:"Wed"},
+    {d:4,label:"Thursday",short:"Thu"},
+    {d:5,label:"Friday",short:"Fri"},
+    {d:6,label:"Saturday",short:"Sat"},
+  ];
+
+  const [avail,setAvail]=useState({
+    0:{active:false,start:"09:00",end:"17:00"},
+    1:{active:true, start:"09:00",end:"18:00"},
+    2:{active:true, start:"09:00",end:"18:00"},
+    3:{active:true, start:"09:00",end:"18:00"},
+    4:{active:true, start:"09:00",end:"18:00"},
+    5:{active:true, start:"09:00",end:"18:00"},
+    6:{active:true, start:"10:00",end:"15:00"},
+  });
+
+  const [settings,setSettings]=useState({
+    duration:30,
+    buffer:15,
+    min_notice:2,
+    advance_days:30,
+    appt_types:"New Patient,Follow-up,Cleaning,Emergency,Consultation",
+  });
+
+  const [saved,setSaved]=useState(false);
+  const [linkCopied,setLinkCopied]=useState(false);
+
+  // Placeholder — will be real client_id from auth in production
+  const clientId="[your-client-uuid]";
+  const bookingUrl=`https://aiautomatedcalls.com/book?client_id=${clientId}`;
+
+  const setDay=(d,field,val)=>setAvail(a=>({...a,[d]:{...a[d],[field]:val}}));
+
+  const save=()=>{
+    // TODO (ISSUE 2): PATCH to Supabase
+    // PUT /rest/v1/availability and /rest/v1/booking_settings
+    // using VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY + user JWT
+    setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  const copyLink=()=>{
+    navigator.clipboard.writeText(bookingUrl);
+    setLinkCopied(true);
+    setTimeout(()=>setLinkCopied(false),2000);
+  };
+
+  return(
+    <div className="fade-in">
+      <SH
+        title="Availability"
+        sub="Set your hours · Patients book via your booking link"
+        action={
+          <button className="btn btn-primary" onClick={save}>
+            {saved?<><Check size={13}/>Saved!</>:<><Check size={13}/>Save Changes</>}
+          </button>
+        }
+      />
+
+      {/* Booking link card */}
+      <div className="card" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(31,168,160,.05),rgba(61,123,217,.03))",border:"1px solid rgba(31,168,160,.15)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:600,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>Your Booking Link</div>
+            <div style={{fontSize:13,color:"var(--t2)",fontFamily:"monospace",wordBreak:"break-all"}}>{bookingUrl}</div>
+            <div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Share this with patients — they'll see your available slots and book directly.</div>
+          </div>
+          <div style={{display:"flex",gap:8",flexShrink:0}}>
+            <button className="btn btn-ghost" onClick={copyLink} style={{fontSize:12}}>
+              {linkCopied?<><Check size={12}/>Copied!</>:<><Copy size={12}/>Copy link</>}
+            </button>
+            <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{fontSize:12,textDecoration:"none"}}>
+              <Link size={12}/>Preview
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly availability */}
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Weekly Hours</div>
+        <div style={{display:"flex",flexDirection:"column",gap:0}}>
+          {DAYS.map(({d,label,short},i)=>(
+            <div key={d} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:i<6?"1px solid var(--border)":"none",flexWrap:"wrap"}}>
+              <Toggle checked={avail[d].active} onChange={v=>setDay(d,"active",v)}/>
+              <span style={{fontSize:13,fontWeight:500,color:avail[d].active?"var(--t1)":"var(--t3)",width:90,flexShrink:0}}>{label}</span>
+              {avail[d].active?(
+                <div style={{display:"flex",alignItems:"center",gap:8,flex:1,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--t3)"}}>From</span>
+                    <input
+                      type="time"
+                      value={avail[d].start}
+                      onChange={e=>setDay(d,"start",e.target.value)}
+                      style={{width:100,padding:"5px 8px",fontSize:13}}
+                    />
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:11,color:"var(--t3)"}}>To</span>
+                    <input
+                      type="time"
+                      value={avail[d].end}
+                      onChange={e=>setDay(d,"end",e.target.value)}
+                      style={{width:100,padding:"5px 8px",fontSize:13}}
+                    />
+                  </div>
+                  <span style={{fontSize:12,color:"var(--t3)"}}>
+                    {(() => {
+                      const [sh,sm]=avail[d].start.split(":").map(Number);
+                      const [eh,em]=avail[d].end.split(":").map(Number);
+                      const mins=(eh*60+em)-(sh*60+sm);
+                      const slots=Math.max(0,Math.floor(mins/(settings.duration+settings.buffer)));
+                      return slots>0?`~${slots} slots`:null;
+                    })()}
+                  </span>
+                </div>
+              ):(
+                <span style={{fontSize:13,color:"var(--t3)"}}>Closed</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Booking settings */}
+      <div className="card">
+        <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Booking Settings</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16}}>
+          <div>
+            <label>Appointment duration (minutes)</label>
+            <select value={settings.duration} onChange={e=>setSettings(s=>({...s,duration:+e.target.value}))}>
+              {[15,20,30,45,60,90].map(v=><option key={v} value={v}>{v} min</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Buffer between appointments (minutes)</label>
+            <select value={settings.buffer} onChange={e=>setSettings(s=>({...s,buffer:+e.target.value}))}>
+              {[0,5,10,15,20,30].map(v=><option key={v} value={v}>{v} min</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Minimum advance notice (hours)</label>
+            <select value={settings.min_notice} onChange={e=>setSettings(s=>({...s,min_notice:+e.target.value}))}>
+              {[1,2,4,8,24,48].map(v=><option key={v} value={v}>{v}h</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Book up to (days in advance)</label>
+            <select value={settings.advance_days} onChange={e=>setSettings(s=>({...s,advance_days:+e.target.value}))}>
+              {[7,14,30,60,90].map(v=><option key={v} value={v}>{v} days</option>)}
+            </select>
+          </div>
+          <div style={{gridColumn:"1/-1"}}>
+            <label>Appointment types (comma-separated)</label>
+            <input
+              value={settings.appt_types}
+              onChange={e=>setSettings(s=>({...s,appt_types:e.target.value}))}
+              placeholder="New Patient, Follow-up, Cleaning, Emergency"
+            />
+            <div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Patients will choose from these options on your booking page.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ClientBilling=()=>(<div className="fade-in"><SH title="Billing" sub="Standard Plan · Active"/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}><div className="card" style={{background:"linear-gradient(135deg,rgba(31,168,160,.07),rgba(61,123,217,.05))",border:"1px solid rgba(31,168,160,.14)"}}><div style={{fontSize:11,color:"var(--accent)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Current Plan</div><div style={{fontSize:28,fontWeight:800,marginBottom:4}}>Standard</div><div style={{fontSize:18,fontWeight:600,color:"var(--accent)",marginBottom:16}}>$2,000<span style={{fontSize:13,color:"var(--t3)"}}>/ month</span></div>{["AI voice receptionist 24/7","Outbound lead follow-up","SMS + email sequences","No-show re-booking","Monthly ROI report","Dashboard access"].map(f=>(<div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><CheckCircle size={13} color="var(--success)"/><span style={{fontSize:13,color:"var(--t2)"}}>{f}</span></div>))}</div><div style={{display:"flex",flexDirection:"column",gap:14}}><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Next Billing</div><div style={{fontSize:18,fontWeight:700}}>June 1, 2026</div><div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>$2,000 via Stripe · Visa ····4242</div></div><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Setup Fee</div><div style={{fontSize:18,fontWeight:700}}>$1,500</div><div style={{fontSize:12,color:"var(--success)",marginTop:2}}>✓ Paid</div></div><button className="btn btn-ghost" style={{justifyContent:"center",padding:10}}>Upgrade to Premium — $3,000/mo</button></div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Invoice History</div><table><thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>{[["INV-0012","May 1, 2026","$2,000"],["INV-0011","Apr 1, 2026","$2,000"],["INV-0010","Mar 1, 2026","$2,000"],["INV-0009","Oct 3, 2025","$3,500"]].map(([id,d,a])=>(<tr key={id}><td style={{fontWeight:500,color:"var(--t1)"}}>{id}</td><td>{d}</td><td style={{fontWeight:700,color:"var(--t1)"}}>{a}</td><td><Bdg type="success" ch="paid"/></td><td><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}}><Download size={11}/>PDF</button></td></tr>))}</tbody></table></div></div>);
 
@@ -236,7 +424,13 @@ const MarketingPage=({onGetStarted})=>{
 
 const LoginPage=({onLogin})=>{const [role,setRole]=useState("admin");return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24}}><div style={{width:"100%",maxWidth:380}}><div style={{textAlign:"center",marginBottom:32}}><img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/><p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p></div><div className="card"><div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg-card2)",borderRadius:8,padding:4}}>{["admin","client"].map(r=>(<button key={r} onClick={()=>setRole(r)} style={{flex:1,padding:"7px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:role===r?"var(--bg-card)":"transparent",color:role===r?"var(--t1)":"var(--t3)"}}>{r==="admin"?"Agency Admin":"Client Portal"}</button>))}</div><div style={{display:"grid",gap:12,marginBottom:16}}><div><label>Email</label><input type="email" defaultValue={role==="admin"?"admin@aiautomatedcalls.com":"dr.park@sunrisedental.com"}/></div><div><label>Password</label><input type="password" defaultValue="••••••••"/></div></div><button className="btn btn-primary" onClick={()=>onLogin(role)} style={{width:"100%",justifyContent:"center",padding:"11px",fontSize:14}}>Sign in as {role==="admin"?"Agency Admin":"Client"}</button><div style={{textAlign:"center",marginTop:14}}><span style={{fontSize:12,color:"var(--t3)"}}>Forgot password? <span style={{color:"var(--accent)",cursor:"pointer"}}>Reset</span></span></div></div><p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:18}}>Secured by Stripe · SOC 2 compliant · 99.8% uptime</p></div></div>);};
 
-const PAGES={overview:<AdminOverview/>,clients:<AdminClients/>,pipeline:<AdminPipeline/>,analytics:<AdminAnalytics/>,agents:<AdminAgents/>,automations:<AdminAutomations/>,social:<AdminSocialAds/>,settings:<AdminSettings/>,cdash:<ClientDashboard/>,recordings:<ClientRecordings/>,appointments:<ClientAppointments/>,billing:<ClientBilling/>,csettings:<ClientSettings/>};
+const PAGES={
+  overview:<AdminOverview/>,clients:<AdminClients/>,pipeline:<AdminPipeline/>,
+  analytics:<AdminAnalytics/>,agents:<AdminAgents/>,automations:<AdminAutomations/>,
+  social:<AdminSocialAds/>,settings:<AdminSettings/>,
+  cdash:<ClientDashboard/>,recordings:<ClientRecordings/>,appointments:<ClientAppointments/>,
+  availability:<ClientAvailability/>,billing:<ClientBilling/>,csettings:<ClientSettings/>,
+};
 
 export default function App(){
   const [screen,setScreen]=useState("marketing");
