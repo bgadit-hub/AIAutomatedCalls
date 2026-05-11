@@ -1,0 +1,329 @@
+{
+  "name": "AI Agency — Lead Trigger to Sales Call",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "instantly-link-click",
+        "responseMode": "immediatelyOnStart",
+        "options": {}
+      },
+      "id": "node-webhook-instantly",
+      "name": "Webhook — Instantly.ai Link Click",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "notes": "Configure in Instantly.ai: Settings > Webhooks > Add > Event: 'Link Clicked' > URL: this webhook URL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.event_type }}",
+              "rightValue": "link_click",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "node-filter-event",
+      "name": "Filter — Link Click Only",
+      "type": "n8n-nodes-base.filter",
+      "position": [460, 300],
+      "notes": "Only proceed for link click events, not opens"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.loom.com/v1/videos/{{ $json.video_id }}/analytics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "node-loom-check",
+      "name": "Loom — Check Watch Percentage",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [680, 300],
+      "notes": "Get watch % for this viewer. Credential: Loom API Bearer token. video_id = your demo video ID (hardcode it)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.viewer_percentage }}",
+              "rightValue": 30,
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ]
+        }
+      },
+      "id": "node-filter-watched",
+      "name": "Filter — Watched >30% of Demo",
+      "type": "n8n-nodes-base.filter",
+      "position": [900, 300],
+      "notes": "Only call people who actually engaged with the demo. Adjust threshold as needed."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/v1/people/match",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "email": "={{ $('Webhook — Instantly.ai Link Click').item.json.email }}",
+          "reveal_personal_emails": false
+        },
+        "options": {}
+      },
+      "id": "node-apollo-enrich",
+      "name": "Apollo — Enrich Lead Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 300],
+      "notes": "Get business name, title, phone, industry. Credential: Apollo API key in header as 'Content-Type: application/json' + 'Cache-Control: no-cache'"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "email": "={{ $('Webhook — Instantly.ai Link Click').item.json.email }}",
+          "firstName": "={{ $('Apollo — Enrich Lead Data').item.json.person.first_name }}",
+          "lastName": "={{ $('Apollo — Enrich Lead Data').item.json.person.last_name }}",
+          "name": "={{ $('Apollo — Enrich Lead Data').item.json.person.name }}",
+          "phone": "={{ $('Apollo — Enrich Lead Data').item.json.person.phone_numbers[0].raw_number }}",
+          "companyName": "={{ $('Apollo — Enrich Lead Data').item.json.person.organization.name }}",
+          "tags": ["cold-email-lead", "demo-watched", "awaiting-call"],
+          "customField": {
+            "demo_watch_pct": "={{ $('Loom — Check Watch Percentage').item.json.viewer_percentage }}",
+            "business_type": "={{ $('Apollo — Enrich Lead Data').item.json.person.organization.industry }}",
+            "city": "={{ $('Apollo — Enrich Lead Data').item.json.person.city }}",
+            "lead_source": "cold-email"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-contact",
+      "name": "GHL — Create / Update Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1340, 300],
+      "notes": "Upsert contact in GoHighLevel. Credential: GHL API key. Use locationId for your GHL sub-account."
+    },
+    {
+      "parameters": {
+        "unit": "minutes",
+        "amount": 3
+      },
+      "id": "node-wait",
+      "name": "Wait 3 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "position": [1560, 300],
+      "notes": "Small delay so GHL contact is fully created before Retell call fires"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "from_number": "+1[YOUR_SALES_TWILIO_NUMBER]",
+          "to_number": "={{ $('Apollo — Enrich Lead Data').item.json.person.phone_numbers[0].sanitized_number }}",
+          "agent_id": "[YOUR_RETELL_AGENT_ID]",
+          "retell_llm_dynamic_variables": {
+            "PROSPECT_NAME": "={{ $('Apollo — Enrich Lead Data').item.json.person.first_name }}",
+            "BUSINESS_NAME": "={{ $('Apollo — Enrich Lead Data').item.json.person.organization.name }}",
+            "BUSINESS_TYPE": "={{ $('Apollo — Enrich Lead Data').item.json.person.organization.industry }}",
+            "CITY": "={{ $('Apollo — Enrich Lead Data').item.json.person.city }}",
+            "SETUP_FEE": "$1,500",
+            "MONTHLY_FEE": "$2,000",
+            "DEMO_WATCHED_PERCENT": "={{ $('Loom — Check Watch Percentage').item.json.viewer_percentage }}",
+            "STRIPE_LINK": "https://buy.stripe.com/[YOUR_STRIPE_LINK]",
+            "GHL_CONTACT_ID": "={{ $('GHL — Create / Update Contact').item.json.contact.id }}"
+          },
+          "metadata": {
+            "ghl_contact_id": "={{ $('GHL — Create / Update Contact').item.json.contact.id }}",
+            "lead_email": "={{ $('Webhook — Instantly.ai Link Click').item.json.email }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-retell-dispatch",
+      "name": "Retell AI — Dispatch Sales Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1780, 300],
+      "notes": "Fires the AI sales call. Credential: Retell AI API key as Bearer token. Replace [YOUR_RETELL_AGENT_ID] and [YOUR_SALES_TWILIO_NUMBER]."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $('GHL — Create / Update Contact').item.json.contact.id }}/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "body": "AI sales call dispatched at {{ $now.format('YYYY-MM-DD HH:mm') }}. Demo watch %: {{ $('Loom — Check Watch Percentage').item.json.viewer_percentage }}. Retell call ID: {{ $('Retell AI — Dispatch Sales Call').item.json.call_id }}"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-note",
+      "name": "GHL — Log Call Dispatch",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2000, 300],
+      "notes": "Log the call dispatch to GHL contact record for full history"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Retell AI — Dispatch Sales Call').item.json.call_status }}",
+              "rightValue": "error",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "node-error-check",
+      "name": "Check for Call Error",
+      "type": "n8n-nodes-base.if",
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[YOUR_SLACK_WEBHOOK]",
+        "contentType": "json",
+        "body": {
+          "text": "⚠️ Retell call dispatch FAILED for {{ $('Apollo — Enrich Lead Data').item.json.person.name }} at {{ $('Apollo — Enrich Lead Data').item.json.person.organization.name }}. Error: {{ $('Retell AI — Dispatch Sales Call').item.json.error_message }}. GHL ID: {{ $('GHL — Create / Update Contact').item.json.contact.id }}"
+        },
+        "options": {}
+      },
+      "id": "node-slack-error",
+      "name": "Slack — Alert on Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2440, 180],
+      "notes": "Optional: send yourself a Slack alert if the call fails. Replace with email if you don't use Slack."
+    },
+    {
+      "parameters": {
+        "ruleName": "No-Answer Retry Scheduler",
+        "ruleInterval": "custom",
+        "customInterval": "0 10,14,18 * * *"
+      },
+      "id": "node-retry-cron",
+      "name": "Cron — Retry No-Answer Leads",
+      "type": "n8n-nodes-base.cron",
+      "position": [240, 560],
+      "notes": "Runs at 10am, 2pm, 6pm daily. Picks up contacts tagged 'no-answer' in GHL and retries. Limit 3 retries per lead."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://rest.gohighlevel.com/v1/contacts/?tags=no-answer&limit=20",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "node-ghl-noanswer",
+      "name": "GHL — Get No-Answer Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 560],
+      "notes": "Get contacts tagged 'no-answer' who have retry_count < 3"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-split",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [680, 560],
+      "notes": "Process one contact at a time to avoid rate limits"
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 30
+      },
+      "id": "node-retry-wait",
+      "name": "Wait 30 Seconds Between Calls",
+      "type": "n8n-nodes-base.wait",
+      "position": [900, 560]
+    }
+  ],
+  "connections": {
+    "Webhook — Instantly.ai Link Click": {
+      "main": [[{ "node": "Filter — Link Click Only", "type": "main", "index": 0 }]]
+    },
+    "Filter — Link Click Only": {
+      "main": [[{ "node": "Loom — Check Watch Percentage", "type": "main", "index": 0 }]]
+    },
+    "Loom — Check Watch Percentage": {
+      "main": [[{ "node": "Filter — Watched >30% of Demo", "type": "main", "index": 0 }]]
+    },
+    "Filter — Watched >30% of Demo": {
+      "main": [[{ "node": "Apollo — Enrich Lead Data", "type": "main", "index": 0 }]]
+    },
+    "Apollo — Enrich Lead Data": {
+      "main": [[{ "node": "GHL — Create / Update Contact", "type": "main", "index": 0 }]]
+    },
+    "GHL — Create / Update Contact": {
+      "main": [[{ "node": "Wait 3 Minutes", "type": "main", "index": 0 }]]
+    },
+    "Wait 3 Minutes": {
+      "main": [[{ "node": "Retell AI — Dispatch Sales Call", "type": "main", "index": 0 }]]
+    },
+    "Retell AI — Dispatch Sales Call": {
+      "main": [[{ "node": "GHL — Log Call Dispatch", "type": "main", "index": 0 }]]
+    },
+    "GHL — Log Call Dispatch": {
+      "main": [[{ "node": "Check for Call Error", "type": "main", "index": 0 }]]
+    },
+    "Check for Call Error": {
+      "main": [
+        [{ "node": "Slack — Alert on Error", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Cron — Retry No-Answer Leads": {
+      "main": [[{ "node": "GHL — Get No-Answer Leads", "type": "main", "index": 0 }]]
+    },
+    "GHL — Get No-Answer Leads": {
+      "main": [[{ "node": "Split Into Batches", "type": "main", "index": 0 }]]
+    },
+    "Split Into Batches": {
+      "main": [[{ "node": "Wait 30 Seconds Between Calls", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "_SETUP_NOTES": {
+    "credentials_needed": [
+      "Instantly.ai API key (for webhook verification)",
+      "Loom API Bearer token",
+      "Apollo.io API key",
+      "GoHighLevel API key + Location ID",
+      "Retell AI API key",
+      "Slack webhook URL (optional)"
+    ],
+    "placeholders_to_replace": [
+      "[YOUR_SALES_TWILIO_NUMBER] — e.g. +15551234567",
+      "[YOUR_RETELL_AGENT_ID] — from Retell AI dashboard",
+      "[YOUR_STRIPE_LINK] — from Stripe payment links",
+      "[YOUR_SLACK_WEBHOOK] — from Slack app settings (optional)"
+    ],
+    "testing": "Use n8n's built-in test feature. Send a test webhook payload with a fake email, skip the Loom check in test mode by setting viewer_percentage to 80 manually.",
+    "important": "Instantly.ai webhook fires on EVERY link click including your own testing clicks. Add an email filter to exclude your own domain."
+  }
+}

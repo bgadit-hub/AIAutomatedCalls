@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[AGENCY_NAME] — AI Receptionist for Local Businesses</title>
+<meta name="description" content="Your phone answered 24/7. Appointments booked automatically. Zero missed calls. AI receptionist built for [NICHE] businesses in [CITY].">
+
+<!-- REPLACE ALL [PLACEHOLDERS] BEFORE DEPLOYING -->
+<!-- [AGENCY_NAME] — your agency name -->
+<!-- [YOUR_NAME] — your first name -->
+<!-- [CITY] — your primary target city -->
+<!-- [NICHE] — your primary niche (dental, real estate, etc.) -->
+<!-- [DEMO_PHONE] — your Twilio demo line number -->
+<!-- [LOOM_EMBED_ID] — the ID from your Loom embed URL -->
+<!-- [CALENDLY_URL] or [GHL_CALENDAR_URL] — your booking link -->
+<!-- [YOUR_EMAIL] — your contact email -->
+<!-- [CASE_STUDY_NUMBER_1] — real number (calls handled) -->
+<!-- [CASE_STUDY_NUMBER_2] — real number (appointments booked) -->
+<!-- [CASE_STUDY_NUMBER_3] — real number (revenue captured) -->
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0f0f0f;
+    --white: #ffffff;
+    --gray-50: #f9f9f8;
+    --gray-100: #f0efeb;
+    --gray-200: #e0ddd6;
+    --gray-400: #9b9890;
+    --gray-600: #5f5d57;
+    --gray-800: #2c2b28;
+    --accent: #1a1a1a;
+    --green: #166534;
+    --green-bg: #f0fdf4;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    color: var(--black);
+    background: var(--white);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-size: 15px; font-weight: 600; color: var(--black); text-decoration: none; }
+  .nav-cta {
+    background: var(--black); color: var(--white);
+    padding: 8px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; text-decoration: none;
+    transition: opacity .15s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* HERO */
+  .hero {
+    padding: 140px 24px 80px;
+    max-width: 680px; margin: 0 auto;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    background: var(--green-bg);
+    color: var(--green);
+    font-size: 12px; font-weight: 500; letter-spacing: .04em;
+    padding: 5px 14px; border-radius: 100px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; line-height: 1.1;
+    letter-spacing: -.02em;
+    color: var(--black);
+    margin-bottom: 20px;
+  }
+  h1 em { font-style: normal; color: var(--gray-600); }
+  .hero-sub {
+    font-size: 18px; color: var(--gray-600);
+    max-width: 520px; margin: 0 auto 36px;
+    line-height: 1.5;
+  }
+  .hero-cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--black); color: var(--white);
+    padding: 14px 28px; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 500; text-decoration: none;
+    transition: opacity .15s; display: inline-block;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary {
+    background: transparent; color: var(--black);
+    border: 1.5px solid var(--gray-200);
+    padding: 14px 28px; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 500; text-decoration: none;
+    transition: border-color .15s; display: inline-block;
+  }
+  .btn-secondary:hover { border-color: var(--black); }
+  .demo-note { font-size: 13px; color: var(--gray-400); margin-top: 14px; }
+  .demo-note a { color: var(--black); font-weight: 500; }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 28px 24px;
+  }
+  .stats-inner {
+    max-width: 800px; margin: 0 auto;
+    display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-number { font-size: 28px; font-weight: 700; color: var(--black); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--gray-600); margin-top: 4px; }
+
+  /* SECTIONS */
+  section { padding: 80px 24px; }
+  .section-inner { max-width: 800px; margin: 0 auto; }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--gray-400);
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 700; line-height: 1.2;
+    letter-spacing: -.015em;
+    margin-bottom: 16px;
+  }
+  .section-sub { font-size: 17px; color: var(--gray-600); margin-bottom: 48px; }
+
+  /* VIDEO DEMO */
+  .video-wrap {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    aspect-ratio: 16/9;
+    position: relative;
+  }
+  .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* CALL DEMO CARD */
+  .demo-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    margin-top: 24px;
+    display: flex; align-items: center; gap: 20px;
+    flex-wrap: wrap;
+  }
+  .demo-phone-num { font-size: 24px; font-weight: 700; letter-spacing: .02em; }
+  .demo-phone-label { font-size: 13px; color: var(--gray-600); margin-top: 3px; }
+  .demo-cta-text { flex: 1; min-width: 200px; }
+  .demo-arrow { font-size: 22px; color: var(--gray-400); }
+
+  /* HOW IT WORKS */
+  .steps { display: flex; flex-direction: column; gap: 32px; }
+  .step { display: flex; gap: 20px; align-items: flex-start; }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--black); color: var(--white);
+    font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .step-title { font-size: 17px; font-weight: 600; margin-bottom: 5px; }
+  .step-desc { font-size: 15px; color: var(--gray-600); line-height: 1.5; }
+
+  /* FEATURES GRID */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .feature-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 24px;
+  }
+  .feature-icon { font-size: 22px; margin-bottom: 12px; }
+  .feature-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .feature-desc { font-size: 13px; color: var(--gray-600); line-height: 1.5; }
+
+  /* PRICING */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .pricing-card {
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    background: var(--white);
+    position: relative;
+  }
+  .pricing-card.featured {
+    border-color: var(--black);
+    background: var(--black);
+    color: var(--white);
+  }
+  .pricing-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--black); color: var(--white);
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    padding: 4px 12px; border-radius: 100px; white-space: nowrap;
+  }
+  .pricing-card.featured .pricing-badge { background: var(--white); color: var(--black); }
+  .pricing-tier { font-size: 13px; font-weight: 500; opacity: 0.6; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
+  .pricing-price { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+  .pricing-price span { font-size: 15px; font-weight: 400; opacity: 0.6; }
+  .pricing-setup { font-size: 13px; opacity: 0.6; margin-bottom: 20px; }
+  .pricing-features { list-style: none; margin-bottom: 24px; }
+  .pricing-features li { font-size: 14px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .pricing-card:not(.featured) .pricing-features li { border-color: var(--gray-200); }
+  .pricing-features li::before { content: '✓ '; font-weight: 600; }
+  .pricing-btn {
+    display: block; text-align: center;
+    padding: 12px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500; text-decoration: none;
+    transition: opacity .15s;
+  }
+  .pricing-card:not(.featured) .pricing-btn { background: var(--black); color: var(--white); }
+  .pricing-card.featured .pricing-btn { background: var(--white); color: var(--black); }
+  .pricing-btn:hover { opacity: 0.85; }
+
+  /* SOCIAL PROOF */
+  .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .testimonial {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md); padding: 24px;
+  }
+  .testimonial-text { font-size: 15px; line-height: 1.6; color: var(--gray-800); margin-bottom: 16px; }
+  .testimonial-text::before { content: '"'; }
+  .testimonial-text::after { content: '"'; }
+  .testimonial-author { font-size: 13px; font-weight: 600; }
+  .testimonial-role { font-size: 12px; color: var(--gray-600); }
+  .stars { color: #f59e0b; font-size: 14px; margin-bottom: 8px; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 1px; }
+  .faq-item { border-top: 1px solid var(--gray-200); }
+  .faq-item:last-child { border-bottom: 1px solid var(--gray-200); }
+  .faq-question {
+    padding: 18px 0; font-size: 16px; font-weight: 500;
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    background: none; border: none; width: 100%; text-align: left; color: var(--black);
+  }
+  .faq-toggle { font-size: 20px; color: var(--gray-400); transition: transform .2s; flex-shrink: 0; margin-left: 12px; }
+  .faq-answer { display: none; padding: 0 0 18px; font-size: 15px; color: var(--gray-600); line-height: 1.6; }
+  .faq-item.open .faq-answer { display: block; }
+  .faq-item.open .faq-toggle { transform: rotate(45deg); }
+
+  /* CTA SECTION */
+  .cta-section {
+    background: var(--black); color: var(--white);
+    text-align: center; padding: 80px 24px;
+  }
+  .cta-section h2 { color: var(--white); margin-bottom: 16px; }
+  .cta-section p { color: rgba(255,255,255,.6); font-size: 17px; margin-bottom: 36px; }
+  .cta-section .btn-primary { background: var(--white); color: var(--black); }
+  .cta-section .demo-note { color: rgba(255,255,255,.4); }
+  .cta-section .demo-note a { color: var(--white); }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 24px;
+    border-top: 1px solid var(--gray-200);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+    gap: 12px; max-width: 900px; margin: 0 auto;
+  }
+  .footer-logo { font-size: 14px; font-weight: 600; }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { font-size: 13px; color: var(--gray-600); text-decoration: none; }
+  .footer-links a:hover { color: var(--black); }
+
+  /* UTILITY */
+  .alt-bg { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
+
+  @media (max-width: 600px) {
+    .hero { padding: 120px 20px 60px; }
+    .stats-inner { gap: 24px; }
+    .demo-card { flex-direction: column; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">[AGENCY_NAME]</a>
+  <a href="#book" class="nav-cta">Book a demo →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-eyebrow">AI Receptionist for Local Businesses</span>
+  <h1>Your phone, answered.<br><em>Every call. Every time.</em></h1>
+  <p class="hero-sub">
+    We build AI receptionists that answer calls 24/7, book appointments automatically,
+    and follow up with every lead — so you never miss a patient or customer again.
+  </p>
+  <div class="hero-cta-group">
+    <a href="#book" class="btn-primary">Book a 15-min demo</a>
+    <a href="#demo" class="btn-secondary">Hear it in action ↓</a>
+  </div>
+  <p class="demo-note">
+    Or call our demo line right now: <a href="tel:[DEMO_PHONE]">[DEMO_PHONE]</a>
+  </p>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat">
+      <div class="stat-number">24/7</div>
+      <div class="stat-label">Always on, never on hold</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">&lt;2s</div>
+      <div class="stat-label">Average answer time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">48h</div>
+      <div class="stat-label">Setup to go-live</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Calls sent to voicemail</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEMO VIDEO + CALL LINE -->
+<section id="demo">
+  <div class="section-inner">
+    <p class="section-label">See it live</p>
+    <h2>Sounds exactly like your receptionist.<br>Works better than any human could.</h2>
+    <p class="section-sub">Watch this 3-minute demo to see what your AI receptionist handles from the moment a patient calls.</p>
+
+    <!-- LOOM EMBED — replace [LOOM_EMBED_ID] -->
+    <div class="video-wrap">
+      <iframe
+        src="https://www.loom.com/embed/[LOOM_EMBED_ID]?hideEmbedTopBar=true"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="demo-card">
+      <div>
+        <div class="demo-phone-num">[DEMO_PHONE]</div>
+        <div class="demo-phone-label">Live demo line — configured for a dental practice</div>
+      </div>
+      <div class="demo-cta-text">
+        <strong>Call this number right now.</strong> Ask to book an appointment, ask about services,
+        try to confuse it. This is the same AI we'd deploy for your business.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="alt-bg">
+  <div class="section-inner">
+    <p class="section-label">How it works</p>
+    <h2>Live in 48 hours. Runs itself after that.</h2>
+    <p class="section-sub">We handle everything. You just watch the bookings come in.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">We build your AI receptionist</div>
+          <div class="step-desc">After a quick onboarding form, we configure your AI with your exact services, hours, FAQs, and calendar. It sounds and acts like a staff member who knows your business inside out.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Your number forwards to the AI</div>
+          <div class="step-desc">We route your existing business number (or set up a new one) so every call goes to the AI first. During business hours, you can still have it ring through to staff after the AI captures key information.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">AI answers, books, and follows up</div>
+          <div class="step-desc">The AI handles the call, books directly into your calendar, sends confirmation texts, and automatically follows up with anyone who doesn't confirm. No voicemail, no missed calls, no chasing.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">You get a monthly report</div>
+          <div class="step-desc">Every month we send you a breakdown: calls handled, appointments booked, estimated revenue captured. You can also log in anytime to hear recordings and see transcripts.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <div class="section-inner">
+    <p class="section-label">What's included</p>
+    <h2>Everything your front desk does — without the overhead.</h2>
+    <br>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📞</div>
+        <div class="feature-title">24/7 call answering</div>
+        <div class="feature-desc">Every call answered in under 2 rings. Nights, weekends, holidays — no exceptions.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <div class="feature-title">Live appointment booking</div>
+        <div class="feature-desc">Books directly into your calendar — Google, Outlook, or your practice management system.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">Automated follow-up</div>
+        <div class="feature-desc">Texts and emails every lead until they book. No lead falls through the cracks.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Missed call text-back</div>
+        <div class="feature-desc">If a call slips through, an instant SMS goes out within seconds. Most people respond.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔁</div>
+        <div class="feature-title">No-show recovery</div>
+        <div class="feature-desc">Missed appointments automatically get a re-booking message. Fills your calendar without you lifting a finger.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Monthly ROI reporting</div>
+        <div class="feature-desc">See exactly how many calls were handled, appointments booked, and what it was worth.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="alt-bg">
+  <div class="section-inner">
+    <p class="section-label">What clients say</p>
+    <h2>Real results for real businesses.</h2>
+    <p class="section-sub">
+      <!-- UPDATE WITH REAL NUMBERS ONCE YOU HAVE CLIENTS -->
+      In the first 30 days, our clients typically see [CASE_STUDY_NUMBER_1] calls handled,
+      [CASE_STUDY_NUMBER_2] appointments booked, and [CASE_STUDY_NUMBER_3] in recovered revenue.
+    </p>
+    <div class="testimonial-grid">
+      <!-- REPLACE WITH REAL TESTIMONIALS AFTER FIRST FEW CLIENTS -->
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <div class="testimonial-text">We were missing 15–20 calls a week after hours. Now the AI catches all of them and books the appointment before I even see the call came in. It paid for itself in week 2.</div>
+        <div class="testimonial-author">Dr. Sarah M.</div>
+        <div class="testimonial-role">Owner, [Dental Practice Name], [City]</div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <div class="testimonial-text">I was skeptical about AI answering my calls. But it sounds completely natural and my patients can't tell. My no-show rate dropped from 22% to 8% in the first month.</div>
+        <div class="testimonial-author">[Client Name]</div>
+        <div class="testimonial-role">Owner, [Business Name], [City]</div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <div class="testimonial-text">Setup was effortless. I filled out a form, had a 20-minute test call two days later, and it's been running on its own ever since. Best thing I've done for my practice this year.</div>
+        <div class="testimonial-author">[Client Name]</div>
+        <div class="testimonial-role">Owner, [Business Name], [City]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-inner">
+    <p class="section-label">Pricing</p>
+    <h2>Simple, transparent pricing.</h2>
+    <p class="section-sub">Month-to-month. Cancel anytime. 14-day money-back guarantee on setup.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-tier">Starter</div>
+        <div class="pricing-price">$1,200 <span>/month</span></div>
+        <div class="pricing-setup">+ $750 one-time setup</div>
+        <ul class="pricing-features">
+          <li>AI answers all inbound calls 24/7</li>
+          <li>FAQ answering (your services, hours)</li>
+          <li>Live appointment booking</li>
+          <li>SMS confirmations + reminders</li>
+          <li>Monthly performance report</li>
+        </ul>
+        <a href="#book" class="pricing-btn">Get started</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most popular</div>
+        <div class="pricing-tier">Standard</div>
+        <div class="pricing-price">$2,000 <span>/month</span></div>
+        <div class="pricing-setup">+ $1,500 one-time setup</div>
+        <ul class="pricing-features">
+          <li>Everything in Starter</li>
+          <li>Outbound lead follow-up calls</li>
+          <li>SMS + email nurture sequences</li>
+          <li>No-show re-booking automation</li>
+          <li>Missed call text-back (instant)</li>
+          <li>Dashboard access + recordings</li>
+        </ul>
+        <a href="#book" class="pricing-btn">Get started</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-tier">Premium</div>
+        <div class="pricing-price">$3,000 <span>/month</span></div>
+        <div class="pricing-setup">+ $2,500 one-time setup</div>
+        <ul class="pricing-features">
+          <li>Everything in Standard</li>
+          <li>Old lead reactivation campaigns</li>
+          <li>Google Ads management</li>
+          <li>Weekly performance review</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#book" class="pricing-btn">Get started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="alt-bg">
+  <div class="section-inner">
+    <p class="section-label">Questions</p>
+    <h2>Everything you want to know.</h2>
+    <br>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How quickly can you get this set up? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">48 hours from when you complete the onboarding form. You fill out your business details, we build and test the agent, run a test call with you, then go live. Most clients are up in under 2 days.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Will my patients/clients know they're talking to an AI? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">The voice is natural and conversational — most callers don't realize it's AI. If you prefer, we can configure it to identify itself as an automated assistant. Either way, callers get their question answered and their appointment booked quickly, which is what matters most.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What calendar systems does it work with? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">Google Calendar, Outlook, Calendly, Acuity, Jane App, Mindbody, Vagaro, and most practice management systems via API. If you use something else, let us know and we'll check compatibility within 24 hours.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What happens if someone asks something the AI doesn't know? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">It says "I want to make sure I get you the right answer on that — let me have someone from the team follow up directly." It logs the question and we update the knowledge base. Gaps shrink quickly in the first two weeks.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Is there a contract? Can I cancel? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">Month-to-month, no long-term contract. Cancel anytime with 30 days notice. We're confident enough in the results that we don't need to lock you in. We also offer a 14-day money-back guarantee on the setup fee if you're not satisfied.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Do I have to replace my current receptionist? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">Not at all. Most of our clients keep their human receptionist. The AI handles after-hours calls, overflow during busy periods, and routine inquiries — freeing your staff to focus on patients and complex tasks. They work together.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How much does call volume cost? <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-answer">Your monthly fee is flat — it covers unlimited call volume. Whether you get 50 calls a month or 500, the price is the same. No per-minute charges, no surprise bills.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOK A CALL -->
+<section id="book">
+  <div class="section-inner" style="text-align:center; max-width:600px">
+    <p class="section-label">Get started</p>
+    <h2>See what it looks like for your business.</h2>
+    <p class="section-sub">15 minutes. We'll show you a live demo configured for your specific niche, walk through pricing, and answer every question.</p>
+
+    <!-- REPLACE WITH YOUR ACTUAL CALENDLY / GHL EMBED -->
+    <!-- Option 1: Calendly embed -->
+    <div style="min-width:320px;height:700px" id="calendly-embed">
+      <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+      <div class="calendly-inline-widget" data-url="[CALENDLY_URL]" style="min-width:320px;height:700px"></div>
+    </div>
+
+    <!-- Option 2: GHL calendar embed (comment out Calendly above and uncomment this)
+    <iframe src="[GHL_CALENDAR_EMBED_URL]" style="width:100%;height:700px;border:none;border-radius:12px"></iframe>
+    -->
+
+    <p class="demo-note" style="margin-top:16px">
+      Prefer a phone call? Reach us at <a href="mailto:[YOUR_EMAIL]">[YOUR_EMAIL]</a>
+      or call <a href="tel:[DEMO_PHONE]">[DEMO_PHONE]</a>
+    </p>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<div class="cta-section">
+  <h2>Stop losing calls to voicemail.</h2>
+  <p>Every unanswered call is a missed appointment. Let's fix that in 48 hours.</p>
+  <a href="#book" class="btn-primary">Book your demo now</a>
+  <p class="demo-note" style="margin-top:14px">
+    Or test the AI right now: <a href="tel:[DEMO_PHONE]">[DEMO_PHONE]</a>
+  </p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">[AGENCY_NAME]</div>
+  <div class="footer-links">
+    <a href="#demo">Demo</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#book">Contact</a>
+    <a href="/privacy">Privacy</a>
+  </div>
+</footer>
+
+<script>
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+
+</body>
+</html>

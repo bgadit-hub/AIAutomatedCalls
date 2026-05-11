@@ -1,0 +1,439 @@
+{
+  "name": "AI Agency — Post-Call Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-call-ended",
+        "responseMode": "immediatelyOnStart",
+        "options": {}
+      },
+      "id": "node-webhook-retell",
+      "name": "Webhook — Retell Call Ended",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "notes": "Configure in Retell AI: Agent Settings > Webhook > Call Ended URL. Retell sends full transcript + call data."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 500,
+          "messages": [
+            {
+              "role": "user",
+              "content": "Analyze this sales call transcript and return ONLY a JSON object with these exact fields:\n\n{\n  \"outcome\": one of [\"payment_agreed\", \"follow_up_booked\", \"send_info\", \"not_interested\", \"no_answer\", \"escalated\"],\n  \"sentiment\": one of [\"positive\", \"neutral\", \"negative\"],\n  \"score\": integer 1-10 (likelihood to close),\n  \"objections\": [array of objections raised],\n  \"follow_up_date\": \"YYYY-MM-DD or null\",\n  \"summary\": \"2 sentence summary\",\n  \"action_required\": \"what needs to happen next\"\n}\n\nTranscript:\n{{ $json.transcript }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-claude-analyze",
+      "name": "Claude — Analyze Call Transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300],
+      "notes": "Uses Claude to extract structured data from the call. Credential: Anthropic API key as 'x-api-key' header."
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content[0].text;\nconst clean = raw.replace(/```json|```/g, '').trim();\ntry {\n  const parsed = JSON.parse(clean);\n  return [{ json: { ...parsed, call_id: $('Webhook — Retell Call Ended').item.json.call_id, ghl_contact_id: $('Webhook — Retell Call Ended').item.json.metadata?.ghl_contact_id, duration_seconds: $('Webhook — Retell Call Ended').item.json.end_timestamp - $('Webhook — Retell Call Ended').item.json.start_timestamp, transcript: $('Webhook — Retell Call Ended').item.json.transcript } }];\n} catch(e) {\n  return [{ json: { outcome: 'error', summary: 'Parse error: ' + e.message, call_id: $('Webhook — Retell Call Ended').item.json.call_id } }];\n}"
+      },
+      "id": "node-parse-json",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "dataPropertyName": "outcome",
+        "rules": {
+          "rules": [
+            { "value": "payment_agreed", "outputKey": "payment" },
+            { "value": "follow_up_booked", "outputKey": "followup" },
+            { "value": "send_info", "outputKey": "sendinfo" },
+            { "value": "not_interested", "outputKey": "dead" },
+            { "value": "no_answer", "outputKey": "noanswer" },
+            { "value": "escalated", "outputKey": "escalated" }
+          ]
+        }
+      },
+      "id": "node-switch-outcome",
+      "name": "Route by Call Outcome",
+      "type": "n8n-nodes-base.switch",
+      "position": [900, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "tags": ["client-won", "awaiting-onboard"],
+          "customField": {
+            "call_outcome": "payment_agreed",
+            "call_score": "={{ $json.score }}",
+            "call_summary": "={{ $json.summary }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-won",
+      "name": "GHL — Tag as Won",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 100],
+      "notes": "PAYMENT AGREED path"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/pipelines/[YOUR_PIPELINE_ID]/opportunities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "title": "New Client — Standard Tier",
+          "status": "won",
+          "contactId": "={{ $json.ghl_contact_id }}",
+          "monetaryValue": 2000,
+          "stageId": "[YOUR_CLOSED_STAGE_ID]"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-deal",
+      "name": "GHL — Create Won Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_ONBOARDING_WORKFLOW_ID]/enroll",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "contactId": "={{ $json.ghl_contact_id }}"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-onboard",
+      "name": "GHL — Start Onboarding Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1580, 100],
+      "notes": "Triggers the client onboarding sequence in GHL (welcome email, onboarding form, calendar booking)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[YOUR_SLACK_WEBHOOK]",
+        "contentType": "json",
+        "body": {
+          "text": "🎉 NEW CLIENT CLOSED! AI just closed a deal on a sales call. Contact ID: {{ $json.ghl_contact_id }}. Onboarding sequence started."
+        },
+        "options": {}
+      },
+      "id": "node-slack-won",
+      "name": "Slack — Celebrate Win",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1800, 100]
+    },
+
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "tags": ["follow-up-booked"],
+          "customField": {
+            "call_outcome": "follow_up_booked",
+            "follow_up_date": "={{ $json.follow_up_date }}",
+            "call_score": "={{ $json.score }}",
+            "call_summary": "={{ $json.summary }}",
+            "objections_raised": "={{ $json.objections.join(', ') }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-followup",
+      "name": "GHL — Tag Follow-Up",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 260],
+      "notes": "FOLLOW-UP path"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_FOLLOWUP_WORKFLOW_ID]/enroll",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "contactId": "={{ $json.ghl_contact_id }}"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-followup-seq",
+      "name": "GHL — Start Follow-Up Sequence",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 260],
+      "notes": "Sends case study email + reminder SMS for the booked follow-up call"
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 400,
+          "messages": [
+            {
+              "role": "user",
+              "content": "Write a short, personalized follow-up email for a sales prospect who asked for more information on a sales call. They were interested but wanted to review more details first.\n\nAbout them:\n- Name: {{ $('Parse Claude Response').item.json.transcript.split(' ')[0] }}\n- Business type: from GHL\n- Objections raised: {{ $json.objections.join(', ') }}\n- Call summary: {{ $json.summary }}\n\nThe email should:\n- Reference something specific from the call\n- Include a link to our case study (https://[YOUR_DOMAIN]/case-study)\n- Include our ROI calculator link (https://[YOUR_DOMAIN]/roi)\n- Be 4-6 sentences max\n- Have a clear CTA: book a follow-up call\n- Subject line included at top as 'Subject: [subject]'\n\nReturn just the email, no preamble."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-claude-email",
+      "name": "Claude — Write Follow-Up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 400],
+      "notes": "SEND INFO path — Claude writes a personalized follow-up"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "html": "={{ $('Claude — Write Follow-Up Email').item.json.content[0].text }}"
+        },
+        "options": {}
+      },
+      "id": "node-send-email",
+      "name": "GHL — Send Follow-Up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 400]
+    },
+
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "tags": ["not-interested"],
+          "customField": {
+            "call_outcome": "not_interested",
+            "call_score": "1",
+            "call_summary": "={{ $json.summary }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-dead",
+      "name": "GHL — Mark Not Interested",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 540],
+      "notes": "DEAD path — remove from active sequences, do not contact for 90 days"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/workflows/[YOUR_REACTIVATION_WORKFLOW_ID]/enroll",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "contactId": "={{ $json.ghl_contact_id }}"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-reactivate",
+      "name": "GHL — Schedule 90-Day Reactivation",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 540],
+      "notes": "Enroll in 90-day wait → single follow-up sequence. \"Just checking if anything's changed\" email."
+    },
+
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "tags": ["no-answer"],
+          "customField": {
+            "call_outcome": "no_answer",
+            "retry_count": "={{ ($('Webhook — Retell Call Ended').item.json.metadata?.retry_count || 0) + 1 }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-ghl-noanswer-tag",
+      "name": "GHL — Tag No Answer",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 680],
+      "notes": "NO ANSWER path — retry cron in trigger workflow will pick this up"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/sms",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "message": "Hey {{ $json.prospect_name }}, this is Alex from [AGENCY_NAME] — I tried calling just now but missed you. You checked out our AI receptionist demo earlier — would love to connect for 10 mins. Here's a link to book a time that works: https://[YOUR_BOOKING_LINK]. Or just reply here!"
+        },
+        "options": {}
+      },
+      "id": "node-sms-noanswer",
+      "name": "Send No-Answer SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1360, 680],
+      "notes": "Send an SMS since the call wasn't answered. More likely to get a response."
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/[YOUR_SLACK_WEBHOOK]",
+        "contentType": "json",
+        "body": {
+          "text": "🚨 WARM TRANSFER NEEDED — AI escalated a call. Contact: {{ $json.ghl_contact_id }}. Summary: {{ $json.summary }}. Action required: {{ $json.action_required }}. Check your phone NOW."
+        },
+        "options": {}
+      },
+      "id": "node-slack-escalate",
+      "name": "Slack — Urgent Escalation Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 820],
+      "notes": "ESCALATED path — you need to join the call or call back immediately"
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 300,
+          "messages": [
+            {
+              "role": "user",
+              "content": "Based on this sales call transcript, identify the top 3 things the AI agent could have done better to improve the outcome. Be specific and actionable. Return as a JSON array of 3 strings.\n\nOutcome: {{ $json.outcome }}\nScore: {{ $json.score }}\nObjections: {{ $json.objections.join(', ') }}\nTranscript excerpt (last 500 chars): {{ $json.transcript.slice(-500) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-claude-improve",
+      "name": "Claude — Generate Improvement Notes",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 820],
+      "notes": "Runs on every call regardless of outcome — builds your weekly improvement report"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "contentType": "json",
+        "body": {
+          "body": "CALL ANALYSIS\n\nOutcome: {{ $json.outcome }}\nScore: {{ $json.score }}/10\nSentiment: {{ $json.sentiment }}\nDuration: {{ Math.round($json.duration_seconds / 60) }} minutes\n\nSummary: {{ $json.summary }}\n\nObjections raised: {{ $json.objections.join(', ') }}\n\nAction required: {{ $json.action_required }}\n\nImprovement notes: {{ $('Claude — Generate Improvement Notes').item.json.content[0].text }}"
+        },
+        "options": {}
+      },
+      "id": "node-ghl-final-note",
+      "name": "GHL — Save Full Analysis Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1140, 960],
+      "notes": "Saves the full analysis to GHL for review. Runs on all calls."
+    }
+  ],
+  "connections": {
+    "Webhook — Retell Call Ended": {
+      "main": [[{ "node": "Claude — Analyze Call Transcript", "type": "main", "index": 0 }]]
+    },
+    "Claude — Analyze Call Transcript": {
+      "main": [[{ "node": "Parse Claude Response", "type": "main", "index": 0 }]]
+    },
+    "Parse Claude Response": {
+      "main": [[
+        { "node": "Route by Call Outcome", "type": "main", "index": 0 },
+        { "node": "Claude — Generate Improvement Notes", "type": "main", "index": 0 }
+      ]]
+    },
+    "Route by Call Outcome": {
+      "payment": [[{ "node": "GHL — Tag as Won", "type": "main", "index": 0 }]],
+      "followup": [[{ "node": "GHL — Tag Follow-Up", "type": "main", "index": 0 }]],
+      "sendinfo": [[{ "node": "Claude — Write Follow-Up Email", "type": "main", "index": 0 }]],
+      "dead": [[{ "node": "GHL — Mark Not Interested", "type": "main", "index": 0 }]],
+      "noanswer": [[{ "node": "GHL — Tag No Answer", "type": "main", "index": 0 }]],
+      "escalated": [[{ "node": "Slack — Urgent Escalation Alert", "type": "main", "index": 0 }]]
+    },
+    "GHL — Tag as Won": {
+      "main": [[{ "node": "GHL — Create Won Deal", "type": "main", "index": 0 }]]
+    },
+    "GHL — Create Won Deal": {
+      "main": [[{ "node": "GHL — Start Onboarding Workflow", "type": "main", "index": 0 }]]
+    },
+    "GHL — Start Onboarding Workflow": {
+      "main": [[{ "node": "Slack — Celebrate Win", "type": "main", "index": 0 }]]
+    },
+    "GHL — Tag Follow-Up": {
+      "main": [[{ "node": "GHL — Start Follow-Up Sequence", "type": "main", "index": 0 }]]
+    },
+    "Claude — Write Follow-Up Email": {
+      "main": [[{ "node": "GHL — Send Follow-Up Email", "type": "main", "index": 0 }]]
+    },
+    "GHL — Mark Not Interested": {
+      "main": [[{ "node": "GHL — Schedule 90-Day Reactivation", "type": "main", "index": 0 }]]
+    },
+    "GHL — Tag No Answer": {
+      "main": [[{ "node": "Send No-Answer SMS", "type": "main", "index": 0 }]]
+    },
+    "Claude — Generate Improvement Notes": {
+      "main": [[{ "node": "GHL — Save Full Analysis Note", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_SETUP_NOTES": {
+    "placeholders_to_replace": [
+      "[YOUR_PIPELINE_ID] — from GHL pipelines",
+      "[YOUR_CLOSED_STAGE_ID] — from GHL pipeline stages",
+      "[YOUR_ONBOARDING_WORKFLOW_ID] — create this workflow in GHL first",
+      "[YOUR_FOLLOWUP_WORKFLOW_ID] — the nurture sequence",
+      "[YOUR_REACTIVATION_WORKFLOW_ID] — 90-day re-engage",
+      "[YOUR_SLACK_WEBHOOK] — optional, can replace with email",
+      "[YOUR_DOMAIN] — your agency website",
+      "[YOUR_BOOKING_LINK] — your GHL or Calendly booking URL"
+    ]
+  }
+}
