@@ -2,36 +2,36 @@
 
 ---
 
+## 2026-05-11 | FEAT | n8n Layer 1 trigger workflow (Vapi)
+File: `n8n/LAYER1_TRIGGER_WORKFLOW.json`
+Website lead → n8n webhook → 45s delay → Vapi outbound call → Supabase update + GHL contact.
+Includes retry cron (10am/2pm/6pm, max 3 attempts). Issue ref: ISSUE 4 resolved (C9).
+
+## 2026-05-11 | DOCS | THOUGHT_PROCESS.md added to repo
+Step 10 added: session wrap-up rule. Files >50KB rule. Small session rule.
+
+## 2026-05-11 | FEAT | vapi-webhook.js (Cloudflare Function)
+Idempotent handler: call-started, end-of-call-report, transcript, tool-calls, transfer.
+Tool handlers: check_availability, book_appointment, qualify_lead, book_demo, transfer_to_human.
+
+## 2026-05-11 | FEAT | submit-lead.js (Cloudflare Function)
+Form → dedupe check → Supabase INSERT → n8n trigger (fire-and-forget).
+
+## 2026-05-11 | FEAT | AIAutomatedCalls.jsx — lead form wired
+Hero section: name + phone + business type form → POST /api/submit-lead.
+Success/loading/error states. Saved to outputs for manual push.
+
 ## 2026-05-11 | DB | All migrations applied — 18 tables live
-11 migrations applied to Supabase (`tkqxwgmkqfusyzrdgacz`):
-- ALTER clients: +industry, +contact_email, +website, +address, +business_hours, +setup_fee_paid, +monthly_fee, +vapi_agent_id, +vapi_number_id, +phone_number, +gcal_refresh_token
-- ALTER leads: +pain_point, +source, +call_status, +call_attempts, +last_called_at, +demo_booked_at, +demo_date, +qualified_score, +ghl_contact_id, +vapi_called
-- ALTER recordings: +vapi_call_id, +layer, +lead_id, +sentiment, +sentiment_score, +transfer_number, +voicemail_left, +cost_cents, +started_at, +ended_at, +call_status + 3 indexes
-- ALTER appointments: +lead_id, +patient_email, +duration_minutes, +calendar_source, +calendar_event_id, +ical_uid, +confirmation_sent, +reminder_sent
-- CREATE agents (with RLS + GRANTs)
-- CREATE call_transcripts (with RLS + GRANTs)
-- CREATE agent_templates (with RLS + GRANTs)
-- CREATE notifications (with RLS + GRANTs)
-- CREATE subscriptions (with RLS + GRANTs)
-- CREATE availability (with RLS + GRANTs)
-- CREATE booking_settings (with RLS + GRANTs)
-Issue ref: ISSUE 6 resolved (C5)
+11 migrations: clients, leads, recordings, appointments altered. agents, call_transcripts, agent_templates, notifications, subscriptions, availability, booking_settings created.
 
-## 2026-05-11 | DOCS | SCHEMA.md corrected to reflect actual DB
-Real schema differed from spec. Key corrections: calls→recordings, business_name→name, plan→tier, call_id→recording_id, patient_phone→phone, status→stage.
-Issue ref: ISSUE 11 resolved (C6)
+## 2026-05-11 | DOCS | SCHEMA.md corrected to actual DB state
+Realised calls=recordings, business_name=name, plan=tier, etc.
 
-## 2026-05-11 | DOCS | Session 6 — full doc review and update
-Thought_Process.md invoked. All 5 docs read from GitHub. Full gap analysis. All docs updated.
+## 2026-05-11 | DOCS | Full documentation suite + session review
+SPEC, SCHEMA, OPS, ISSUE_LOG, CHANGE_LOG all updated.
 
 ## 2026-05-11 | CONFIG | Vapi account + Sales Closer agent
-Brian voice / eleven_flash_v2_5 / GPT-4o. VAPI_API_KEY, VAPI_SALES_AGENT_ID, VAPI_PHONE_NUMBER_ID in Cloudflare.
-
-## 2026-05-11 | ARCH | Native booking system — Calendly replaced
-/book page, /portal/availability, iCal .ics. Google Calendar OAuth deferred P1.
-
-## 2026-05-11 | DOCS | Full documentation suite created
-SPEC, SCHEMA, OPS, ISSUE_LOG, CHANGE_LOG pushed to GitHub.
+Brian / eleven_flash_v2_5 / GPT-4o. Env vars set in Cloudflare.
 
 ## 2026-05-11 | ARCH | Retell AI → Vapi
 
@@ -40,29 +40,21 @@ SPEC, SCHEMA, OPS, ISSUE_LOG, CHANGE_LOG pushed to GitHub.
 ## ~2026-05 | FEAT | Marketing page integrated
 
 ## ~2026-05 | INIT | Initial build
-React 18 + Vite, Supabase, n8n, Cloudflare Pages. Deployed: aiautomatedcalls.pages.dev
-
-## ~2026-05 | INIT | Project inception
-aiautomatedcalls.com secured. Pricing: Starter $750/$1,200 | Standard $1,500/$2,000 | Premium $2,500/$3,000
 
 ---
 
 ## Upcoming
 
-| Priority | Change | Issue |
-|----------|--------|-------|
-| P0 | `submit-lead.js` | ISSUE 5 |
-| P0 | `vapi-webhook.js` | ISSUE 8 |
+| Priority | What | Issue |
+|----------|------|-------|
+| P0 | Import LAYER1_TRIGGER_WORKFLOW into n8n, set creds, activate, copy webhook URL → Cloudflare | ISSUE 12 |
+| P0 | Set VAPI_WEBHOOK_SECRET in Cloudflare + Vapi dashboard | ISSUE 13 |
+| P0 | Manual push of AIAutomatedCalls.jsx | ISSUE 5 |
 | P0 | `check-availability.js` + `book-appointment.js` | ISSUE 9 |
-| P0 | Native booking page `/book` | ISSUE 9 |
-| P0 | Availability manager `/portal/availability` | ISSUE 9 |
-| P0 | Wire marketing form | ISSUE 5 |
+| P0 | `/book` public booking page | ISSUE 9 |
+| P1 | `/portal/availability` manager | ISSUE 9 |
 | P1 | Client onboarding wizard | — |
-| P1 | Google Calendar OAuth | ISSUE 10 |
-| P1 | Twilio SMS + Resend email | — |
-| P1 | Live data in all dashboards | ISSUE 2 |
+| P1 | Live data in dashboards | ISSUE 2 |
 | P1 | Post-call Claude analysis | — |
-| P1 | Archive Retell files | ISSUE 4 |
 | P2 | Multi-agent routing | — |
 | P2 | Stripe billing | — |
-| P2 | AI insights dashboard | — |
