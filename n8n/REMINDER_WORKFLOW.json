@@ -1,0 +1,184 @@
+{
+  "name": "AI Agency — Appointment Reminders (24h)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 * * * *" }] }
+      },
+      "id": "node-cron",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "notes": "Runs every hour. Checks for appointments in the next 24h that haven't had a reminder sent."
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/appointments?status=eq.confirmed&reminder_sent=eq.false&patient_email=neq.null&scheduled_at=gte.{{ new Date().toISOString() }}&scheduled_at=lte.{{ new Date(Date.now() + 24*3600000).toISOString() }}&select=id,patient_name,patient_email,appointment_type,scheduled_at,duration_minutes,client_id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-fetch-appts",
+      "name": "Fetch Upcoming Appointments",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300],
+      "notes": "Gets all confirmed appointments with patient_email in the next 24h that haven't had a reminder sent."
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue":  "={{ $json.length }}",
+              "rightValue": 0,
+              "operator":   { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "node-has-appts",
+      "name": "Any appointments?",
+      "type": "n8n-nodes-base.if",
+      "position": [680, 300],
+      "notes": "Skip if nothing to remind."
+    },
+
+    {
+      "parameters": {
+        "fieldToSplitOut": "=",
+        "options": {}
+      },
+      "id": "node-split",
+      "name": "Split into items",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [900, 220],
+      "notes": "One item per appointment so we can loop."
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=name,phone_number",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-get-client",
+      "name": "Get Client Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 220],
+      "notes": "Fetches the client (business) name and phone for the email."
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const appt = $('Split into items').item.json;\nconst clientArr = $input.first().json;\nconst client = Array.isArray(clientArr) ? clientArr[0] : clientArr;\n\nconst scheduledAt = new Date(appt.scheduled_at);\nconst formattedDate = scheduledAt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });\nconst formattedTime = scheduledAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' });\n\nconst businessName = client?.name || 'Your Provider';\nconst businessPhone = client?.phone_number || null;\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;\">\n  <div style=\"max-width:520px;margin:40px auto;background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);\">\n    <div style=\"background:#1FA8A0;padding:28px 32px;\">\n      <div style=\"font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;\">Appointment Reminder</div>\n      <h1 style=\"margin:0;font-size:22px;font-weight:800;color:#FFFFFF;\">${businessName}</h1>\n    </div>\n    <div style=\"padding:28px 32px;\">\n      <p style=\"margin:0 0 20px;font-size:15px;color:#374151;\">Hi <strong>${appt.patient_name}</strong>,</p>\n      <p style=\"margin:0 0 24px;font-size:14px;color:#6B7280;line-height:1.6;\">Just a friendly reminder about your upcoming appointment <strong>tomorrow</strong>.</p>\n      <div style=\"background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:0;overflow:hidden;margin-bottom:24px;\">\n        <div style=\"display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E5E7EB;\">\n          <span style=\"font-size:13px;color:#6B7280;font-weight:500;\">📅 Date</span>\n          <span style=\"font-size:13px;color:#111827;font-weight:600;\">${formattedDate}</span>\n        </div>\n        <div style=\"display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E5E7EB;\">\n          <span style=\"font-size:13px;color:#6B7280;font-weight:500;\">🕐 Time</span>\n          <span style=\"font-size:13px;color:#111827;font-weight:600;\">${formattedTime}</span>\n        </div>\n        <div style=\"display:flex;justify-content:space-between;padding:12px 16px;\">\n          <span style=\"font-size:13px;color:#6B7280;font-weight:500;\">📋 Type</span>\n          <span style=\"font-size:13px;color:#111827;font-weight:600;\">${appt.appointment_type}</span>\n        </div>\n      </div>\n      ${businessPhone ? `<p style=\"margin:0 0 8px;font-size:13px;color:#6B7280;\">Need to reschedule? Call us: <a href=\"tel:${businessPhone}\" style=\"color:#1FA8A0;font-weight:600;text-decoration:none;\">${businessPhone}</a></p>` : ''}\n      <p style=\"margin:0;font-size:13px;color:#9CA3AF;\">We look forward to seeing you!</p>\n    </div>\n    <div style=\"background:#F9FAFB;border-top:1px solid #E5E7EB;padding:14px 32px;\">\n      <p style=\"margin:0;font-size:11px;color:#9CA3AF;\">Powered by <a href=\"https://aiautomatedcalls.com\" style=\"color:#1FA8A0;text-decoration:none;\">AI Automated Calls</a></p>\n    </div>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: {\n  appointment_id: appt.id,\n  patient_email:  appt.patient_email,\n  patient_name:   appt.patient_name,\n  business_name:  businessName,\n  formatted_date: formattedDate,\n  formatted_time: formattedTime,\n  subject: `Reminder: Your appointment tomorrow at ${formattedTime} — ${businessName}`,\n  html,\n}}];"
+      },
+      "id": "node-build-email",
+      "name": "Build Reminder Email",
+      "type": "n8n-nodes-base.code",
+      "position": [1340, 220],
+      "notes": "Builds the HTML reminder email body."
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "contentType": "json",
+        "body": {
+          "from":    "={{ $json.business_name + ' <' + $env.RESEND_FROM + '>' }}",
+          "to":     ["={{ $json.patient_email }}"],
+          "subject": "={{ $json.subject }}",
+          "html":    "={{ $json.html }}"
+        },
+        "options": {}
+      },
+      "id": "node-send-resend",
+      "name": "Send Reminder via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 220],
+      "notes": "Requires n8n env vars: RESEND_API_KEY, RESEND_FROM\nRESEND_FROM = appointments@yourdomain.com"
+    },
+
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/appointments?id=eq.{{ $('Build Reminder Email').item.json.appointment_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "contentType": "json",
+        "body": { "reminder_sent": true },
+        "options": {}
+      },
+      "id": "node-mark-reminded",
+      "name": "Mark reminder_sent = true",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1780, 220],
+      "notes": "Prevents duplicate reminders on next hourly run."
+    }
+  ],
+
+  "connections": {
+    "Every Hour":                  { "main": [[{ "node": "Fetch Upcoming Appointments", "type": "main", "index": 0 }]] },
+    "Fetch Upcoming Appointments": { "main": [[{ "node": "Any appointments?",           "type": "main", "index": 0 }]] },
+    "Any appointments?":           {
+      "true":  [[{ "node": "Split into items", "type": "main", "index": 0 }]],
+      "false": []
+    },
+    "Split into items":            { "main": [[{ "node": "Get Client Info",      "type": "main", "index": 0 }]] },
+    "Get Client Info":             { "main": [[{ "node": "Build Reminder Email", "type": "main", "index": 0 }]] },
+    "Build Reminder Email":        { "main": [[{ "node": "Send Reminder via Resend", "type": "main", "index": 0 }]] },
+    "Send Reminder via Resend":    { "main": [[{ "node": "Mark reminder_sent = true", "type": "main", "index": 0 }]] }
+  },
+
+  "settings": { "executionOrder": "v1" },
+
+  "_SETUP_NOTES": {
+    "description": "Sends 24-hour appointment reminder emails via Resend. Runs every hour and processes any upcoming appointments that haven't had a reminder sent.",
+    "required_n8n_env_vars": [
+      "SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "RESEND_API_KEY — from resend.com",
+      "RESEND_FROM — e.g. appointments@yourdomain.com (must be verified in Resend)"
+    ],
+    "how_to_import": [
+      "1. n8n > New Workflow > Import from File > select this JSON",
+      "2. Set env vars in Settings > Variables (see above)",
+      "3. Activate the workflow — it runs automatically every hour",
+      "4. Test: create an appointment with patient_email set and scheduled_at within 24h"
+    ],
+    "notes": [
+      "Reminder emails are only sent when patient_email is not null",
+      "reminder_sent is set to true after each email — prevents duplicates",
+      "The workflow loops: one email per appointment per run",
+      "Appointment must have status = 'confirmed' to receive reminder"
+    ]
+  }
+}
