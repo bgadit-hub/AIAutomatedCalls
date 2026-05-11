@@ -17,8 +17,9 @@ The consistent failure pattern in AI call projects: jumping straight to code wit
 - Each session tackles ONE discrete unit of work (one function, one migration set, one page, one doc update)
 - After completing the unit, summarize what was done and what comes next
 - Ask the user "Ready to continue?" before starting the next unit
-- Never push large files (>50KB) via MCP — save to outputs for manual push instead
-- If a tool call times out, note it, fall back to outputs/manual, and continue
+- Never ask the user to push manually — always push directly via `github:push_files` (local PAT tool)
+- The local `github:push_files` tool handles files up to at least 70KB without issue
+- If a tool call fails, debug and retry — do not fall back to asking the user to push manually
 - Keep responses concise during build sessions — no long explanations mid-build
 
 ---
@@ -83,7 +84,7 @@ Before writing any code, state:
 - For webhook handlers: trace the full event chain before writing code
 - For call flow changes: map the full conversation path including failure states
 - **Wiring check:** For every data field changed, trace DB → API → webhook → frontend
-- **File size rule:** Files >50KB must be saved to `/mnt/user-data/outputs/` for manual push — do NOT attempt MCP push on large files
+- **Always push directly** via `github:push_files` (local PAT) — never ask the user to push manually
 
 ---
 
@@ -111,7 +112,7 @@ If the change affects call flow, schema, webhook events, provider config, routes
 
 ---
 
-### Step 10 — Session Wrap-Up (NEW)
+### Step 10 — Session Wrap-Up
 
 At the end of every session unit:
 1. State what was completed
@@ -132,7 +133,7 @@ At the end of every session unit:
 - **Every call flow change must account for all terminal states: answered, voicemail, no-answer, error, transfer.**
 - **Every webhook handler must be idempotent** — assume it can be called more than once
 - Never store sensitive data (recordings, PII, API keys) in logs or error messages
-- **Never push files >50KB via MCP — save to outputs for manual push**
+- **Never ask the user to push manually — always push directly via `github:push_files`**
 - **Work in small sessions — one unit at a time — ask to continue between units**
 
 ---
@@ -143,7 +144,7 @@ At the end of every session unit:
 - [ ] Step 2: Read all 5 docs from GitHub
 - [ ] Step 3: Research findings
 - [ ] Step 4: Recommendation before building
-- [ ] Step 5: Execute — read before editing, trace full call flow, GRANTs in every new table, webhooks idempotent, files >50KB → outputs
+- [ ] Step 5: Execute — read before editing, trace full call flow, GRANTs in every new table, webhooks idempotent, always push directly
 - [ ] Step 6: Update CHANGE_LOG
 - [ ] Step 7: Update ISSUE_LOG (resolved)
 - [ ] Step 8: Update ISSUE_LOG (new issues)
@@ -169,8 +170,7 @@ At the end of every session unit:
 
 | Task | Tool | Notes |
 |------|------|-------|
-| Push files <50KB | `github:push_files` | Local PAT — works reliably |
-| Push files >50KB | Save to outputs, manual push | MCP times out on large files |
+| Push any file | `github:push_files` | Local PAT — works for files up to 70KB+ |
 | GitHub Copilot MCP | Do NOT use for push | Returns 403 |
 | DB migrations | `Supabase:apply_migration` | Never raw execute_sql for DDL |
 | DB queries | `Supabase:execute_sql` | Read-only safe |
