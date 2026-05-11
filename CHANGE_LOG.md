@@ -2,40 +2,48 @@
 
 ---
 
-## 2026-05-11 | DOCS | Session 6 — full doc review and update
-**Protocol:** Invoked Thought_Process.md before building. Read all 5 docs from GitHub. Full gap analysis performed.
-**Changes:**
-- SPEC: Voice config added (Brian/eleven_flash_v2_5), `/book` and `/portal/availability` routes added, native booking system documented, iCal added, Calendly references removed, Google Cal deferred P1, onboarding Step 4 updated, tool calls updated, env var status updated, new functions table added
-- SCHEMA: `availability` and `booking_settings` tables added, `calendar_source` updated (native/ical/google), `agents.voice_model` column added, `clients.vapi_number_id` added, migration status table added
-- OPS: Vapi marked live, session 6 logged, P0/P1/P2 lists updated, env var status updated
-- ISSUE_LOG: ISSUE 7 resolved (C4), ISSUE 9 added (native booking), ISSUE 10 added (Google Cal deferred)
-- CHANGE_LOG: this entry
+## 2026-05-11 | DB | All migrations applied — 18 tables live
+11 migrations applied to Supabase (`tkqxwgmkqfusyzrdgacz`):
+- ALTER clients: +industry, +contact_email, +website, +address, +business_hours, +setup_fee_paid, +monthly_fee, +vapi_agent_id, +vapi_number_id, +phone_number, +gcal_refresh_token
+- ALTER leads: +pain_point, +source, +call_status, +call_attempts, +last_called_at, +demo_booked_at, +demo_date, +qualified_score, +ghl_contact_id, +vapi_called
+- ALTER recordings: +vapi_call_id, +layer, +lead_id, +sentiment, +sentiment_score, +transfer_number, +voicemail_left, +cost_cents, +started_at, +ended_at, +call_status + 3 indexes
+- ALTER appointments: +lead_id, +patient_email, +duration_minutes, +calendar_source, +calendar_event_id, +ical_uid, +confirmation_sent, +reminder_sent
+- CREATE agents (with RLS + GRANTs)
+- CREATE call_transcripts (with RLS + GRANTs)
+- CREATE agent_templates (with RLS + GRANTs)
+- CREATE notifications (with RLS + GRANTs)
+- CREATE subscriptions (with RLS + GRANTs)
+- CREATE availability (with RLS + GRANTs)
+- CREATE booking_settings (with RLS + GRANTs)
+Issue ref: ISSUE 6 resolved (C5)
 
-## 2026-05-11 | CONFIG | Vapi account + Sales Closer agent provisioned
-Account created, credit card added. Sales Closer agent: Brian voice (`nPczCjzI2devNBz1zQrb`) / `eleven_flash_v2_5` / GPT-4o. 1 free phone number provisioned. VAPI_API_KEY, VAPI_SALES_AGENT_ID, VAPI_PHONE_NUMBER_ID added to Cloudflare env vars. Issue ref: ISSUE 7 resolved.
+## 2026-05-11 | DOCS | SCHEMA.md corrected to reflect actual DB
+Real schema differed from spec. Key corrections: calls→recordings, business_name→name, plan→tier, call_id→recording_id, patient_phone→phone, status→stage.
+Issue ref: ISSUE 11 resolved (C6)
+
+## 2026-05-11 | DOCS | Session 6 — full doc review and update
+Thought_Process.md invoked. All 5 docs read from GitHub. Full gap analysis. All docs updated.
+
+## 2026-05-11 | CONFIG | Vapi account + Sales Closer agent
+Brian voice / eleven_flash_v2_5 / GPT-4o. VAPI_API_KEY, VAPI_SALES_AGENT_ID, VAPI_PHONE_NUMBER_ID in Cloudflare.
 
 ## 2026-05-11 | ARCH | Native booking system — Calendly replaced
-Decision: build native booking system instead of Calendly dependency. `/book` public page, `/book/[slug]` per-client, `/portal/availability` manager, iCal .ics on every booking. Google Calendar sync deferred to P1. Issue ref: ISSUE 9.
+/book page, /portal/availability, iCal .ics. Google Calendar OAuth deferred P1.
 
 ## 2026-05-11 | DOCS | Full documentation suite created
-Files: `docs/SPEC.md`, `docs/SCHEMA.md`, `docs/OPS.md`, `ISSUE_LOG.md`, `CHANGE_LOG.md`
-Pushed via `github:push_files` (local PAT).
+SPEC, SCHEMA, OPS, ISSUE_LOG, CHANGE_LOG pushed to GitHub.
 
 ## 2026-05-11 | ARCH | Retell AI → Vapi
-Vapi selected: cleaner programmatic agent creation, better webhooks, stronger LLM integration. Issue ref: ISSUE 4.
 
 ## ~2026-05 | FEAT | Light theme + logo
-`src/AIAutomatedCalls.jsx` — teal #1FA8A0, `assets/logos/logo-main.png`.
 
 ## ~2026-05 | FEAT | Marketing page integrated
-`src/AIAutomatedCalls.jsx` — default route `/` → marketing page.
 
 ## ~2026-05 | INIT | Initial build
-React 18 + Vite (14 pages), Supabase schema, n8n workflows, Retell prompt, GHL guide, Cloudflare Function. Deployed: Cloudflare Pages.
+React 18 + Vite, Supabase, n8n, Cloudflare Pages. Deployed: aiautomatedcalls.pages.dev
 
 ## ~2026-05 | INIT | Project inception
-AI voice receptionists for local businesses. aiautomatedcalls.com secured.
-Pricing: Starter $750/$1,200 | Standard $1,500/$2,000 | Premium $2,500/$3,000
+aiautomatedcalls.com secured. Pricing: Starter $750/$1,200 | Standard $1,500/$2,000 | Premium $2,500/$3,000
 
 ---
 
@@ -43,7 +51,6 @@ Pricing: Starter $750/$1,200 | Standard $1,500/$2,000 | Premium $2,500/$3,000
 
 | Priority | Change | Issue |
 |----------|--------|-------|
-| P0 | DB migrations (7 tables) | ISSUE 6 |
 | P0 | `submit-lead.js` | ISSUE 5 |
 | P0 | `vapi-webhook.js` | ISSUE 8 |
 | P0 | `check-availability.js` + `book-appointment.js` | ISSUE 9 |
@@ -52,9 +59,10 @@ Pricing: Starter $750/$1,200 | Standard $1,500/$2,000 | Premium $2,500/$3,000
 | P0 | Wire marketing form | ISSUE 5 |
 | P1 | Client onboarding wizard | — |
 | P1 | Google Calendar OAuth | ISSUE 10 |
-| P1 | Twilio SMS + Resend email post-call | — |
+| P1 | Twilio SMS + Resend email | — |
 | P1 | Live data in all dashboards | ISSUE 2 |
 | P1 | Post-call Claude analysis | — |
+| P1 | Archive Retell files | ISSUE 4 |
 | P2 | Multi-agent routing | — |
 | P2 | Stripe billing | — |
 | P2 | AI insights dashboard | — |
