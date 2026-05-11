@@ -1,8 +1,6 @@
 
 // ============================================================
 //  AI AUTOMATED CALLS — Full Dashboard · aiautomatedcalls.com
-//  Nav system adapted from EnvoyGlobe (aac- prefix)
-//  Desktop: fixed sidebar 228px/56px · Mobile: bottom nav + sheet
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,12 +12,14 @@ import {
   PhoneMissed, ChevronLeft, ChevronRight, Bell, TrendingUp,
   CheckCircle, AlertCircle, Clock, ArrowUpRight, Play, Download,
   Filter, Plus, Eye, RefreshCw, DollarSign, Activity, MoreHorizontal,
-  Sparkles, Target, Send, Copy, Check, X, Shield, Radio, Layers, Star, Link
+  Sparkles, Target, Send, Copy, Check, X, Shield, Layers, Star, Link,
+  LogOut, Loader
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import { supabase } from './supabase';
 import BookingPage from './BookingPage';
 
 const CSS = `
@@ -111,21 +111,13 @@ const Dot=({c})=><span style={{width:7,height:7,borderRadius:"50%",background:c,
 const CT=({active,payload,label})=>active&&payload?.length?(<div className="tt"><div style={{color:"var(--t3)",marginBottom:4,fontSize:11}}>{label}</div>{payload.map((p,i)=><div key={i} style={{color:p.color||"var(--accent)",fontWeight:600,fontSize:12}}>{p.name}: {p.name?.toLowerCase().includes("r")?`$${p.value?.toLocaleString()}`:p.value}</div>)}</div>):null;
 const SC=({label,value,sub,trend,Icon,color="var(--accent)"})=>(<div className="card fade-in" style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><span style={{fontSize:12,color:"var(--t2)",fontWeight:500}}>{label}</span>{Icon&&<div style={{width:32,height:32,borderRadius:8,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon size={15} color={color}/></div>}</div><div><div style={{fontSize:26,fontWeight:700,letterSpacing:"-.02em",color:"var(--t1)"}}>{value}</div>{sub&&<div style={{fontSize:12,marginTop:4,display:"flex",alignItems:"center",gap:4,color:trend==="up"?"var(--success)":trend==="dn"?"var(--danger)":"var(--t3)"}}>{trend==="up"&&<ArrowUpRight size={11}/>}{sub}</div>}</div></div>);
 const SH=({title,sub,action})=>(<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}><div><h2 style={{fontSize:17,fontWeight:700,color:"var(--t1)"}}>{title}</h2>{sub&&<p style={{fontSize:13,color:"var(--t2)",marginTop:3}}>{sub}</p>}</div>{action}</div>);
+const Toggle=({checked,onChange})=>(<label className="toggle"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/><span className="toggle-track"/><span className="toggle-thumb"/></label>);
 
-// Simple toggle switch component
-const Toggle=({checked,onChange})=>(
-  <label className="toggle">
-    <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/>
-    <span className="toggle-track"/>
-    <span className="toggle-thumb"/>
-  </label>
-);
-
-const Sidebar=({col,setCol,page,setPage,role})=>{const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;return(<aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}><div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>{col?<img src={logoIcon} alt="logo" style={{width:32,height:32,objectFit:"contain"}}/>:<img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>}</div><nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>{nav.map(g=>(<div key={g.group} style={{marginBottom:2}}>{!col&&<div style={{fontSize:10,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:".08em",padding:"8px 20px 4px"}}>{g.group}</div>}{g.items.map(item=>{const active=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}><item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>{!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}{col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}</button>);})}</div>))}</nav>{!col&&<div style={{padding:"12px 16px",borderTop:"1px solid var(--border)"}}><div style={{background:"var(--bg-card2)",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:6,background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><Shield size={13} color="var(--accent)"/></div><div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{role==="admin"?"Agency Admin":"Sunrise Dental"}</div><div style={{fontSize:11,color:"var(--t3)"}}>{role==="admin"?"aiautomatedcalls.com":"Client portal"}</div></div></div></div>}<button onClick={()=>setCol(c=>!c)} style={{height:40,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderTop:"1px solid var(--border)",cursor:"pointer",color:"var(--t3)",flexShrink:0}} title={col?"Expand":"Collapse"}>{col?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}</button></aside>);};
+const Sidebar=({col,setCol,page,setPage,role})=>{const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;return(<aside className="aac-sidebar" style={{position:"fixed",top:0,left:0,bottom:0,width:col?"var(--sidebar-c)":"var(--sidebar-w)",background:"var(--bg-sidebar)",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",zIndex:50,overflow:"hidden"}}><div style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",padding:col?"0":"0 16px",justifyContent:col?"center":"flex-start",borderBottom:"1px solid var(--border)",flexShrink:0}}>{col?<img src={logoIcon} alt="logo" style={{width:32,height:32,objectFit:"contain"}}/>:<img src={logoFull} alt="AI Automated Calls" style={{height:34,width:"auto",maxWidth:160,objectFit:"contain"}}/>}</div><nav className="aac-sidebar-nav" style={{flex:1,overflowY:"auto",padding:"10px 0"}}>{nav.map(g=>(<div key={g.group} style={{marginBottom:2}}>{!col&&<div style={{fontSize:10,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:".08em",padding:"8px 20px 4px"}}>{g.group}</div>}{g.items.map(item=>{const active=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} title={col?item.label:undefined} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:col?"12px 0":"9px 16px 9px 20px",background:active?"rgba(31,168,160,.08)":"transparent",border:"none",cursor:"pointer",position:"relative",borderLeft:active?"3px solid var(--accent)":"3px solid transparent",justifyContent:col?"center":"flex-start",transition:"all .12s"}}><item.Icon size={16} color={active?"var(--accent)":"var(--t3)"}/>{!col&&<><span style={{fontSize:13,fontWeight:active?600:400,color:active?"var(--t1)":"var(--t2)",flex:1,textAlign:"left"}}>{item.label}</span>{item.badge&&<span className={`badge bdg-${item.bdgType||"muted"}`} style={{fontSize:10,padding:"1px 6px"}}>{item.badge}</span>}</>}{col&&item.badge&&<span style={{position:"absolute",top:6,right:6,width:7,height:7,borderRadius:"50%",background:item.bdgType==="warn"?"var(--warn)":item.bdgType==="info"?"var(--accent)":"var(--t3)"}}/>}</button>);})}</div>))}</nav>{!col&&<div style={{padding:"12px 16px",borderTop:"1px solid var(--border)"}}><div style={{background:"var(--bg-card2)",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:6,background:"var(--accent-dim)",display:"flex",alignItems:"center",justifyContent:"center"}}><Shield size={13} color="var(--accent)"/></div><div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:600,color:"var(--t1)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{role==="admin"?"Agency Admin":"Client Portal"}</div><div style={{fontSize:11,color:"var(--t3)"}}>{role==="admin"?"aiautomatedcalls.com":"Logged in"}</div></div></div></div>}<button onClick={()=>setCol(c=>!c)} style={{height:40,display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderTop:"1px solid var(--border)",cursor:"pointer",color:"var(--t3)",flexShrink:0}} title={col?"Expand":"Collapse"}>{col?<ChevronRight size={15}/>:<ChevronLeft size={15}/>}</button></aside>);};
 
 const MobileNav=({page,setPage,role})=>{const [sheet,setSheet]=useState(false);const nav=role==="admin"?ADMIN_NAV:CLIENT_NAV;const pids=role==="admin"?A_PRI:C_PRI;const all=nav.flatMap(g=>g.items);const primary=pids.map(id=>all.find(i=>i.id===id)).filter(Boolean);const more=all.filter(i=>!pids.includes(i.id));return(<><div className="aac-mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg-sidebar)",borderTop:"1px solid var(--border)",alignItems:"center",justifyContent:"space-around",height:62,zIndex:50,paddingBottom:"env(safe-area-inset-bottom)"}}>{primary.map(item=>{const a=page===item.id;return(<button key={item.id} onClick={()=>setPage(item.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}><item.Icon size={20} color={a?"var(--accent)":"var(--t3)"}/><span style={{fontSize:10,fontWeight:a?600:400,color:a?"var(--accent)":"var(--t3)"}}>{item.label.split(" ")[0]}</span></button>);})}<button onClick={()=>setSheet(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",padding:"6px 12px",flex:1}}><MoreHorizontal size={20} color="var(--t3)"/><span style={{fontSize:10,color:"var(--t3)"}}>More</span></button></div>{sheet&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:100}} onClick={()=>setSheet(false)}><div className="slide-up" onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:0,right:0,background:"var(--bg-card)",borderRadius:"20px 20px 0 0",padding:"20px 20px 48px",borderTop:"1px solid var(--border2)"}}><div style={{width:36,height:4,borderRadius:2,background:"var(--border2)",margin:"0 auto 20px"}}/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{more.map(item=>{const a=page===item.id;return(<button key={item.id} onClick={()=>{setPage(item.id);setSheet(false);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:a?"var(--accent-dim)":"var(--bg-card2)",border:`1px solid ${a?"var(--accent)":"var(--border)"}`,borderRadius:10,cursor:"pointer"}}><item.Icon size={16} color={a?"var(--accent)":"var(--t2)"}/><span style={{fontSize:13,color:a?"var(--t1)":"var(--t2)",fontWeight:a?600:400}}>{item.label}</span></button>);})}</div></div></div>)}</>);};
 
-const TopBar=({page,role,onSwitch})=>{const all=[...ADMIN_NAV,...CLIENT_NAV].flatMap(g=>g.items);const cur=all.find(i=>i.id===page);return(<div className="aac-topbar" style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid var(--border)",position:"sticky",top:0,zIndex:40}}><div style={{display:"flex",alignItems:"center",gap:10}}>{cur?.Icon&&<cur.Icon size={15} color="var(--t3)"/>}<span style={{fontSize:14,fontWeight:600,color:"var(--t1)"}}>{cur?.label||"Dashboard"}</span>{role==="admin"&&<span className="badge bdg-muted">Admin</span>}</div><div style={{display:"flex",alignItems:"center",gap:8}}><button className="btn btn-ghost" onClick={onSwitch} style={{fontSize:11,padding:"5px 10px"}}><Layers size={12}/>Switch to {role==="admin"?"Client":"Admin"}</button><div style={{width:1,height:18,background:"var(--border)"}}/><button style={{width:32,height:32,borderRadius:8,background:"var(--bg-card2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}><Bell size={14} color="var(--t2)"/><span style={{position:"absolute",top:5,right:5,width:7,height:7,borderRadius:"50%",background:"var(--danger)"}}/></button><div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:12,fontWeight:700,color:"#fff"}}>{role==="admin"?"A":"S"}</span></div></div></div>);};
+const TopBar=({page,role,onLogout})=>{const all=[...ADMIN_NAV,...CLIENT_NAV].flatMap(g=>g.items);const cur=all.find(i=>i.id===page);return(<div className="aac-topbar" style={{height:"var(--topbar-h)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid var(--border)",position:"sticky",top:0,zIndex:40}}><div style={{display:"flex",alignItems:"center",gap:10}}>{cur?.Icon&&<cur.Icon size={15} color="var(--t3)"/>}<span style={{fontSize:14,fontWeight:600,color:"var(--t1)"}}>{cur?.label||"Dashboard"}</span>{role==="admin"&&<span className="badge bdg-muted">Admin</span>}</div><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:1,height:18,background:"var(--border)"}}/><button style={{width:32,height:32,borderRadius:8,background:"var(--bg-card2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}}><Bell size={14} color="var(--t2)"/><span style={{position:"absolute",top:5,right:5,width:7,height:7,borderRadius:"50%",background:"var(--danger)"}}/></button><div style={{width:32,height:32,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:12,fontWeight:700,color:"#fff"}}>{role==="admin"?"A":"C"}</span></div><button className="btn btn-ghost" onClick={onLogout} style={{fontSize:11,padding:"5px 10px",gap:4}}><LogOut size={11}/>Sign out</button></div></div>);};
 
 const AdminOverview=()=>(<div className="fade-in"><SH title="Agency Overview" sub="All systems operational · aiautomatedcalls.com" action={<button className="btn btn-ghost"><RefreshCw size={13}/>Refresh</button>}/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:14,marginBottom:24}}><SC label="Active Clients" value="24" sub="↑2 this month" trend="up" Icon={Users} color="var(--accent)"/><SC label="Monthly Revenue" value="$48,200" sub="↑$4,400 MoM" trend="up" Icon={DollarSign} color="var(--success)"/><SC label="Calls Today" value="847" sub="↑12% vs yesterday" trend="up" Icon={PhoneCall} color="var(--accent2)"/><SC label="Leads in Pipeline" value="31" sub="8 hot leads" Icon={GitBranch} color="var(--warn)"/></div><div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:24}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Revenue Growth</div><ResponsiveContainer width="100%" height={180}><AreaChart data={REV}><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#1FA8A0" stopOpacity={0.2}/><stop offset="95%" stopColor="#1FA8A0" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="m" tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"var(--t3)",fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(0)}k`}/><Tooltip content={<CT/>}/><Area type="monotone" dataKey="r" name="Revenue" stroke="var(--accent)" fill="url(#rg)" strokeWidth={2}/></AreaChart></ResponsiveContainer></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:12}}>Client Mix</div><ResponsiveContainer width="100%" height={110}><PieChart><Pie data={[{name:"Standard",value:10},{name:"Premium",value:8},{name:"Starter",value:6}]} cx="50%" cy="50%" innerRadius={28} outerRadius={48} dataKey="value"><Cell fill="var(--accent)"/><Cell fill="var(--accent2)"/><Cell fill="var(--t3)"/></Pie><Tooltip content={<CT/>}/></PieChart></ResponsiveContainer>{[["Standard","var(--accent)",10],["Premium","var(--accent2)",8],["Starter","var(--t3)",6]].map(([l,c,v])=>(<div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}><div style={{display:"flex",alignItems:"center",gap:6}}><Dot c={c}/><span style={{fontSize:12,color:"var(--t2)"}}>{l}</span></div><span style={{fontSize:12,fontWeight:600}}>{v}</span></div>))}</div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Recent Clients</div><table><thead><tr><th>Client</th><th>Tier</th><th>MRR</th><th>Status</th><th>Agent</th></tr></thead><tbody>{CLIENTS.slice(0,5).map(c=>(<tr key={c.id}><td><div style={{fontWeight:500,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t3)"}}>{c.city}</div></td><td><Bdg type={c.tier==="Premium"?"info":c.tier==="Standard"?"success":"muted"} ch={c.tier}/></td><td style={{fontWeight:600,color:"var(--t1)"}}>${c.mrr.toLocaleString()}</td><td><Bdg type={c.status==="active"?"success":"warn"} ch={c.status}/></td><td><Dot c={c.agent==="healthy"?"var(--success)":"var(--warn)"}/><span style={{marginLeft:6,fontSize:12}}>{c.agent}</span></td></tr>))}</tbody></table></div></div>);
 
@@ -149,173 +141,167 @@ const ClientRecordings=()=>{const [sel,setSel]=useState(null);return(<div classN
 
 const ClientAppointments=()=>{const A=[{id:1,name:"Jennifer Walsh",date:"Today 3:00 PM",type:"New Patient — Cleaning",status:"confirmed",phone:"(512) 441-2211"},{id:2,name:"Marcus Kim",date:"Today 4:30 PM",type:"Emergency — Toothache",status:"confirmed",phone:"(512) 773-5521"},{id:3,name:"Priya Patel",date:"Tomorrow 10:00 AM",type:"Follow-up — Filling",status:"pending",phone:"(512) 334-8814"},{id:4,name:"David Chen",date:"Tomorrow 2:00 PM",type:"New Patient — Consult",status:"confirmed",phone:"(512) 226-9982"},{id:5,name:"Sarah Johnson",date:"Jun 6 · 11:00 AM",type:"Cleaning",status:"confirmed",phone:"(512) 889-1140"}];return(<div className="fade-in"><SH title="Appointments" sub="Booked automatically by your AI receptionist"/><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}><SC label="This Week" value="21" Icon={Calendar} color="var(--accent)"/><SC label="Pending Confirm" value="3" Icon={Clock} color="var(--warn)"/><SC label="No-Shows" value="2" Icon={PhoneMissed} color="var(--danger)"/><SC label="Recovered" value="1" sub="via AI re-book" Icon={RefreshCw} color="var(--success)"/></div><div className="card" style={{padding:0,overflow:"hidden"}}><table><thead><tr><th>Patient</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Phone</th></tr></thead><tbody>{A.map(a=>(<tr key={a.id}><td style={{fontWeight:600,color:"var(--t1)"}}>{a.name}</td><td>{a.date}</td><td style={{fontSize:12}}>{a.type}</td><td><Bdg type={a.status==="confirmed"?"success":"warn"} ch={a.status}/></td><td style={{fontSize:12,color:"var(--t3)"}}>{a.phone}</td></tr>))}</tbody></table></div></div>);};
 
-// ─── AVAILABILITY MANAGER ─────────────────────────────────────
+// ─── AVAILABILITY MANAGER — reads/writes real Supabase data ──
 const ClientAvailability=()=>{
   const DAYS=[
-    {d:0,label:"Sunday",short:"Sun"},
-    {d:1,label:"Monday",short:"Mon"},
-    {d:2,label:"Tuesday",short:"Tue"},
-    {d:3,label:"Wednesday",short:"Wed"},
-    {d:4,label:"Thursday",short:"Thu"},
-    {d:5,label:"Friday",short:"Fri"},
-    {d:6,label:"Saturday",short:"Sat"},
+    {d:0,label:"Sunday"},{d:1,label:"Monday"},{d:2,label:"Tuesday"},
+    {d:3,label:"Wednesday"},{d:4,label:"Thursday"},{d:5,label:"Friday"},{d:6,label:"Saturday"},
   ];
-
-  const [avail,setAvail]=useState({
-    0:{active:false,start:"09:00",end:"17:00"},
-    1:{active:true, start:"09:00",end:"18:00"},
-    2:{active:true, start:"09:00",end:"18:00"},
-    3:{active:true, start:"09:00",end:"18:00"},
-    4:{active:true, start:"09:00",end:"18:00"},
-    5:{active:true, start:"09:00",end:"18:00"},
-    6:{active:true, start:"10:00",end:"15:00"},
-  });
-
-  const [settings,setSettings]=useState({
-    duration:30,
-    buffer:15,
-    min_notice:2,
-    advance_days:30,
-    appt_types:"New Patient,Follow-up,Cleaning,Emergency,Consultation",
-  });
-
+  const DEFAULT_AVAIL={
+    0:{active:false,start:"09:00",end:"17:00"},1:{active:true,start:"09:00",end:"18:00"},
+    2:{active:true,start:"09:00",end:"18:00"},3:{active:true,start:"09:00",end:"18:00"},
+    4:{active:true,start:"09:00",end:"18:00"},5:{active:true,start:"09:00",end:"18:00"},
+    6:{active:true,start:"10:00",end:"15:00"},
+  };
+  const [avail,setAvail]=useState(DEFAULT_AVAIL);
+  const [settings,setSettings]=useState({duration:30,buffer:15,min_notice:2,advance_days:30,appt_types:"New Patient,Follow-up,Cleaning,Emergency,Consultation"});
+  const [clientId,setClientId]=useState(null);
   const [saved,setSaved]=useState(false);
+  const [saveErr,setSaveErr]=useState('');
+  const [loading,setLoading]=useState(true);
   const [linkCopied,setLinkCopied]=useState(false);
 
-  // Placeholder — will be real client_id from auth in production
-  const clientId="[your-client-uuid]";
-  const bookingUrl=`https://aiautomatedcalls.com/book?client_id=${clientId}`;
+  const bookingUrl=clientId
+    ?`https://aiautomatedcalls.com/book?client_id=${clientId}`
+    :`https://aiautomatedcalls.com/book?client_id=[your-id]`;
+
+  // Load real data from Supabase
+  useEffect(()=>{
+    const load=async()=>{
+      setLoading(true);
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session){setLoading(false);return;}
+
+      const {data:client}=await supabase
+        .from('clients').select('id').eq('profile_id',session.user.id).single();
+      if(!client){setLoading(false);return;}
+      setClientId(client.id);
+
+      // Load availability
+      const {data:rows}=await supabase
+        .from('availability').select('*').eq('client_id',client.id);
+      if(rows?.length){
+        const mapped={...DEFAULT_AVAIL};
+        rows.forEach(r=>{mapped[r.day_of_week]={active:r.is_active,start:r.start_time.slice(0,5),end:r.end_time.slice(0,5)};});
+        setAvail(mapped);
+      }
+
+      // Load booking settings
+      const {data:s}=await supabase
+        .from('booking_settings').select('*').eq('client_id',client.id).single();
+      if(s){
+        setSettings({
+          duration:s.appointment_duration||30,buffer:s.buffer_time||15,
+          min_notice:s.min_notice_hours||2,advance_days:s.advance_booking_days||30,
+          appt_types:Array.isArray(s.appointment_types)?s.appointment_types.join(','):'New Patient,Follow-up,Cleaning',
+        });
+      }
+      setLoading(false);
+    };
+    load();
+  },[]);
 
   const setDay=(d,field,val)=>setAvail(a=>({...a,[d]:{...a[d],[field]:val}}));
 
-  const save=()=>{
-    // TODO (ISSUE 2): PATCH to Supabase
-    // PUT /rest/v1/availability and /rest/v1/booking_settings
-    // using VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY + user JWT
+  const save=async()=>{
+    setSaveErr('');
+    if(!clientId){setSaveErr('No client record linked to your account.');return;}
+
+    // Upsert 7 availability rows (unique on client_id, day_of_week)
+    const availRows=Object.entries(avail).map(([d,v])=>({
+      client_id:clientId,day_of_week:parseInt(d),
+      start_time:v.start+':00',end_time:v.end+':00',is_active:v.active,
+    }));
+    const {error:ae}=await supabase.from('availability')
+      .upsert(availRows,{onConflict:'client_id,day_of_week'});
+    if(ae){setSaveErr('Failed to save availability: '+ae.message);return;}
+
+    // Upsert booking settings (unique on client_id)
+    const {error:se}=await supabase.from('booking_settings')
+      .upsert({
+        client_id:clientId,
+        appointment_duration:settings.duration,buffer_time:settings.buffer,
+        min_notice_hours:settings.min_notice,advance_booking_days:settings.advance_days,
+        appointment_types:settings.appt_types.split(',').map(t=>t.trim()).filter(Boolean),
+      },{onConflict:'client_id'});
+    if(se){setSaveErr('Failed to save booking settings: '+se.message);return;}
+
     setSaved(true);
-    setTimeout(()=>setSaved(false),2000);
+    setTimeout(()=>setSaved(false),2500);
   };
 
-  const copyLink=()=>{
-    navigator.clipboard.writeText(bookingUrl);
-    setLinkCopied(true);
-    setTimeout(()=>setLinkCopied(false),2000);
-  };
+  const copyLink=()=>{navigator.clipboard.writeText(bookingUrl);setLinkCopied(true);setTimeout(()=>setLinkCopied(false),2000);};
+
+  if(loading)return(<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:300,gap:10,color:'var(--t3)'}}><Loader size={18} className="aac-spin"/>Loading your availability…</div>);
 
   return(
     <div className="fade-in">
-      <SH
-        title="Availability"
-        sub="Set your hours · Patients book via your booking link"
-        action={
-          <button className="btn btn-primary" onClick={save}>
-            {saved?<><Check size={13}/>Saved!</>:<><Check size={13}/>Save Changes</>}
-          </button>
-        }
-      />
+      <SH title="Availability" sub="Set your hours · Patients book via your booking link"
+        action={<button className="btn btn-primary" onClick={save}>{saved?<><Check size={13}/>Saved!</>:<><Check size={13}/>Save Changes</>}</button>}/>
+      {saveErr&&<div style={{marginBottom:12,padding:'10px 14px',background:'var(--danger-dim)',border:'1px solid var(--danger)',borderRadius:8,fontSize:13,color:'var(--danger)'}}>{saveErr}</div>}
 
-      {/* Booking link card */}
+      {/* Booking link */}
       <div className="card" style={{marginBottom:16,background:"linear-gradient(135deg,rgba(31,168,160,.05),rgba(61,123,217,.03))",border:"1px solid rgba(31,168,160,.15)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
-          <div>
-            <div style={{fontSize:12,fontWeight:600,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>Your Booking Link</div>
-            <div style={{fontSize:13,color:"var(--t2)",fontFamily:"monospace",wordBreak:"break-all"}}>{bookingUrl}</div>
-            <div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Share this with patients — they'll see your available slots and book directly.</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:600,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>Your Patient Booking Link</div>
+            <div style={{fontSize:12,color:"var(--t2)",fontFamily:"monospace",wordBreak:"break-all",marginBottom:4}}>{bookingUrl}</div>
+            <div style={{fontSize:11,color:"var(--t3)"}}>Share with patients — they'll see your available slots and book directly.</div>
           </div>
-          <div style={{display:"flex",gap:8",flexShrink:0}}>
-            <button className="btn btn-ghost" onClick={copyLink} style={{fontSize:12}}>
-              {linkCopied?<><Check size={12}/>Copied!</>:<><Copy size={12}/>Copy link</>}
-            </button>
-            <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{fontSize:12,textDecoration:"none"}}>
-              <Link size={12}/>Preview
-            </a>
+          <div style={{display:"flex",gap:8,flexShrink:0}}>
+            <button className="btn btn-ghost" onClick={copyLink} style={{fontSize:12}}>{linkCopied?<><Check size={12}/>Copied!</>:<><Copy size={12}/>Copy link</>}</button>
+            {clientId&&<a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{fontSize:12,textDecoration:"none"}}><Link size={12}/>Preview</a>}
           </div>
         </div>
       </div>
 
-      {/* Weekly availability */}
+      {/* Weekly schedule */}
       <div className="card" style={{marginBottom:16}}>
         <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Weekly Hours</div>
-        <div style={{display:"flex",flexDirection:"column",gap:0}}>
-          {DAYS.map(({d,label,short},i)=>(
-            <div key={d} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:i<6?"1px solid var(--border)":"none",flexWrap:"wrap"}}>
-              <Toggle checked={avail[d].active} onChange={v=>setDay(d,"active",v)}/>
-              <span style={{fontSize:13,fontWeight:500,color:avail[d].active?"var(--t1)":"var(--t3)",width:90,flexShrink:0}}>{label}</span>
-              {avail[d].active?(
-                <div style={{display:"flex",alignItems:"center",gap:8,flex:1,flexWrap:"wrap"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:11,color:"var(--t3)"}}>From</span>
-                    <input
-                      type="time"
-                      value={avail[d].start}
-                      onChange={e=>setDay(d,"start",e.target.value)}
-                      style={{width:100,padding:"5px 8px",fontSize:13}}
-                    />
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:11,color:"var(--t3)"}}>To</span>
-                    <input
-                      type="time"
-                      value={avail[d].end}
-                      onChange={e=>setDay(d,"end",e.target.value)}
-                      style={{width:100,padding:"5px 8px",fontSize:13}}
-                    />
-                  </div>
-                  <span style={{fontSize:12,color:"var(--t3)"}}>
-                    {(() => {
-                      const [sh,sm]=avail[d].start.split(":").map(Number);
-                      const [eh,em]=avail[d].end.split(":").map(Number);
-                      const mins=(eh*60+em)-(sh*60+sm);
-                      const slots=Math.max(0,Math.floor(mins/(settings.duration+settings.buffer)));
-                      return slots>0?`~${slots} slots`:null;
-                    })()}
-                  </span>
+        {DAYS.map(({d,label},i)=>(
+          <div key={d} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 0",borderBottom:i<6?"1px solid var(--border)":"none",flexWrap:"wrap"}}>
+            <Toggle checked={avail[d].active} onChange={v=>setDay(d,"active",v)}/>
+            <span style={{fontSize:13,fontWeight:500,color:avail[d].active?"var(--t1)":"var(--t3)",width:96,flexShrink:0}}>{label}</span>
+            {avail[d].active?(
+              <div style={{display:"flex",alignItems:"center",gap:10,flex:1,flexWrap:"wrap"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:11,color:"var(--t3)"}}>From</span>
+                  <input type="time" value={avail[d].start} onChange={e=>setDay(d,"start",e.target.value)} style={{width:110,padding:"5px 8px",fontSize:13}}/>
                 </div>
-              ):(
-                <span style={{fontSize:13,color:"var(--t3)"}}>Closed</span>
-              )}
-            </div>
-          ))}
-        </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:11,color:"var(--t3)"}}>To</span>
+                  <input type="time" value={avail[d].end} onChange={e=>setDay(d,"end",e.target.value)} style={{width:110,padding:"5px 8px",fontSize:13}}/>
+                </div>
+                <span style={{fontSize:12,color:"var(--t3)"}}>
+                  {(()=>{const[sh,sm]=avail[d].start.split(":").map(Number);const[eh,em]=avail[d].end.split(":").map(Number);const mins=(eh*60+em)-(sh*60+sm);const slots=Math.max(0,Math.floor(mins/(settings.duration+settings.buffer)));return slots>0?`~${slots} slots`:null;})()}
+                </span>
+              </div>
+            ):(
+              <span style={{fontSize:13,color:"var(--t3)"}}>Closed</span>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Booking settings */}
       <div className="card">
         <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Booking Settings</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16}}>
-          <div>
-            <label>Appointment duration (minutes)</label>
+          <div><label>Appointment duration</label>
             <select value={settings.duration} onChange={e=>setSettings(s=>({...s,duration:+e.target.value}))}>
-              {[15,20,30,45,60,90].map(v=><option key={v} value={v}>{v} min</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Buffer between appointments (minutes)</label>
+              {[15,20,30,45,60,90].map(v=><option key={v} value={v}>{v} min</option>)}</select></div>
+          <div><label>Buffer between appointments</label>
             <select value={settings.buffer} onChange={e=>setSettings(s=>({...s,buffer:+e.target.value}))}>
-              {[0,5,10,15,20,30].map(v=><option key={v} value={v}>{v} min</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Minimum advance notice (hours)</label>
+              {[0,5,10,15,20,30].map(v=><option key={v} value={v}>{v} min</option>)}</select></div>
+          <div><label>Minimum advance notice</label>
             <select value={settings.min_notice} onChange={e=>setSettings(s=>({...s,min_notice:+e.target.value}))}>
-              {[1,2,4,8,24,48].map(v=><option key={v} value={v}>{v}h</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Book up to (days in advance)</label>
+              {[1,2,4,8,24,48].map(v=><option key={v} value={v}>{v}h</option>)}</select></div>
+          <div><label>Book up to (days in advance)</label>
             <select value={settings.advance_days} onChange={e=>setSettings(s=>({...s,advance_days:+e.target.value}))}>
-              {[7,14,30,60,90].map(v=><option key={v} value={v}>{v} days</option>)}
-            </select>
-          </div>
-          <div style={{gridColumn:"1/-1"}}>
-            <label>Appointment types (comma-separated)</label>
-            <input
-              value={settings.appt_types}
-              onChange={e=>setSettings(s=>({...s,appt_types:e.target.value}))}
-              placeholder="New Patient, Follow-up, Cleaning, Emergency"
-            />
-            <div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Patients will choose from these options on your booking page.</div>
-          </div>
+              {[7,14,30,60,90].map(v=><option key={v} value={v}>{v} days</option>)}</select></div>
+          <div style={{gridColumn:"1/-1"}}><label>Appointment types (comma-separated)</label>
+            <input value={settings.appt_types} onChange={e=>setSettings(s=>({...s,appt_types:e.target.value}))} placeholder="New Patient, Follow-up, Cleaning"/>
+            <div style={{fontSize:11,color:"var(--t3)",marginTop:4}}>Patients will choose from these on your booking page.</div></div>
         </div>
       </div>
     </div>
@@ -326,12 +312,11 @@ const ClientBilling=()=>(<div className="fade-in"><SH title="Billing" sub="Stand
 
 const ClientSettings=()=>{const [saved,setSaved]=useState(false);return(<div className="fade-in"><SH title="Settings" sub="Configure your AI receptionist"/><div style={{display:"grid",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Information</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name</label><input defaultValue="Sunrise Dental"/></div><div><label>Phone Number</label><input defaultValue="+1 (512) 884-2211"/></div><div><label>Address</label><input defaultValue="2420 S Lamar Blvd, Austin TX"/></div><div><label>Website</label><input defaultValue="sunrisedental.com"/></div></div></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Hours</div>{[["Mon–Fri","9:00 AM – 6:00 PM"],["Saturday","10:00 AM – 3:00 PM"],["Sunday","Closed"]].map(([d,h])=>(<div key={d} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)"}}><span style={{fontSize:13,color:"var(--t2)",width:80}}>{d}</span><input defaultValue={h} style={{width:200}}/></div>))}</div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>AI Agent Settings</div><div style={{display:"grid",gap:12}}><div><label>Agent Voice</label><select><option>Brian (Professional, Male) · ElevenLabs Flash</option><option>Custom (ElevenLabs)</option></select></div><div><label>Greeting Message</label><textarea defaultValue="Thank you for calling Sunrise Dental! This is your AI dental assistant. How can I help you today?" rows={3}/></div><div><label>After-Hours Message</label><textarea defaultValue="You've reached Sunrise Dental after hours. I can still help schedule an appointment or answer questions!" rows={3}/></div></div></div><button className="btn btn-primary" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}} style={{justifyContent:"center",padding:"10px",fontSize:14}}>{saved?<><Check size={14}/>Saved!</>:"Save Changes"}</button></div></div>);};
 
-// ─── MARKETING PAGE — Lead form wired to /api/submit-lead ─────
+// ─── MARKETING PAGE ───────────────────────────────────────────
 const MarketingPage=({onGetStarted})=>{
   const [form,setForm]=useState({name:'',phone:'',business_type:''});
   const [submitStatus,setSubmitStatus]=useState('idle');
   const [errMsg,setErrMsg]=useState('');
-
   const handleSubmit=async()=>{
     if(!form.name.trim()||!form.phone.trim()){setErrMsg('Please enter your name and phone number.');return;}
     setSubmitStatus('loading');setErrMsg('');
@@ -342,13 +327,11 @@ const MarketingPage=({onGetStarted})=>{
       else{setErrMsg(data.error||'Something went wrong. Please try again.');setSubmitStatus('idle');}
     }catch{setErrMsg('Connection error. Please try again.');setSubmitStatus('idle');}
   };
-
   const STEPS=[{n:"01",title:"We deploy your AI",desc:"We configure a custom voice agent trained on your business — FAQs, services, hours, tone. Live in 48 hours."},{n:"02",title:"It answers every call",desc:"Inbound, outbound, after-hours. Your AI greets callers by name, answers questions, and books appointments directly into your calendar."},{n:"03",title:"You grow without hiring",desc:"Get a daily report of every call, booking, and lead. Scale to 500 calls a day without adding a single staff member."}];
   const FEATURES=[{icon:"📞",title:"24/7 inbound answering",desc:"Zero missed calls — evenings, weekends, holidays. Every caller gets a professional response in under 2 rings."},{icon:"📅",title:"Appointment booking",desc:"The AI books directly into your calendar system — Google Calendar, Dentrix, Jane, or any scheduling tool."},{icon:"🔁",title:"Outbound lead follow-up",desc:"New web lead? The AI calls them within 60 seconds, qualifies them, and books the appointment automatically."},{icon:"💬",title:"SMS + email sequences",desc:"Automated confirmation texts, reminders, and no-show recovery sequences run in the background nonstop."},{icon:"📊",title:"Daily performance reports",desc:"See every call, outcome, and booking. Know exactly what your AI said and what revenue it captured."},{icon:"⚡",title:"48-hour setup",desc:"No long onboarding. We get your agent live in 2 days, not 2 months. You're operational before the week is out."}];
   const TIERS=[{name:"Starter",setup:"$750",price:"$1,200",color:"var(--t2)",features:["AI inbound answering 24/7","Appointment booking","SMS confirmations","Monthly ROI report","Up to 300 calls/mo"],cta:"Get started"},{name:"Standard",setup:"$1,500",price:"$2,000",color:"var(--accent)",features:["Everything in Starter","Outbound lead follow-up","No-show recovery sequences","Call recordings + transcripts","Unlimited calls","GoHighLevel integration"],cta:"Most popular",highlight:true},{name:"Premium",setup:"$2,500",price:"$3,000",color:"var(--accent2)",features:["Everything in Standard","Google Ads management","Weekly performance call","AI reactivation of cold leads","Priority same-day support","Custom CRM integration"],cta:"Get started"}];
   const STATS=[{n:"94%",l:"Answer rate"},{n:"< 60s",l:"Speed to lead"},{n:"24/7",l:"Always on"},{n:"48hr",l:"Setup time"}];
   const NICHES=["Dental practices","Real estate agencies","HVAC & plumbing","Med spas","Law firms","Chiropractic offices"];
-
   return(
     <div style={{minHeight:"100vh",background:"#FFFFFF",fontFamily:"var(--font)",color:"var(--t1)"}}>
       <nav style={{position:"sticky",top:0,zIndex:50,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(8px)",borderBottom:"1px solid var(--border)",padding:"0 5%",height:64,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -369,7 +352,7 @@ const MarketingPage=({onGetStarted})=>{
           <div style={{maxWidth:500,margin:'0 auto',background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)',borderRadius:12,padding:'28px',textAlign:'center'}}>
             <div style={{fontSize:36,marginBottom:10}}>✅</div>
             <div style={{fontSize:18,fontWeight:700,color:'var(--success)',marginBottom:8}}>You're all set!</div>
-            <div style={{fontSize:15,color:'var(--t2)',lineHeight:1.65}}>Expect a call within the next 60 seconds. Our AI will walk you through exactly how it works for your business.</div>
+            <div style={{fontSize:15,color:'var(--t2)',lineHeight:1.65}}>Expect a call within the next 60 seconds.</div>
           </div>
         ):(
           <div style={{maxWidth:500,margin:'0 auto'}}>
@@ -394,35 +377,62 @@ const MarketingPage=({onGetStarted})=>{
       <section style={{background:"var(--bg-base)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",padding:"32px 5%"}}>
         <div style={{maxWidth:800,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,textAlign:"center"}}>{STATS.map(s=>(<div key={s.n}><div style={{fontSize:"clamp(28px,4vw,40px)",fontWeight:800,color:"var(--accent)",letterSpacing:"-.02em"}}>{s.n}</div><div style={{fontSize:13,color:"var(--t2)",marginTop:4,fontWeight:500}}>{s.l}</div></div>))}</div>
       </section>
-      <section style={{padding:"64px 5%",textAlign:"center"}}>
-        <p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:12}}>Who we serve</p>
-        <h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em",marginBottom:32}}>Built for local businesses that run on calls</h2>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",maxWidth:700,margin:"0 auto"}}>{NICHES.map(n=>(<span key={n} style={{background:"var(--bg-base)",border:"1px solid var(--border)",borderRadius:100,padding:"8px 18px",fontSize:14,fontWeight:500,color:"var(--t1)"}}>{n}</span>))}</div>
-      </section>
-      <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-        <div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>How it works</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>From signed to live in 48 hours</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:24}}>{STEPS.map(s=>(<div key={s.n} className="card" style={{padding:28}}><div style={{fontSize:13,fontWeight:700,color:"var(--accent)",letterSpacing:".06em",marginBottom:10}}>{s.n}</div><div style={{fontSize:17,fontWeight:700,marginBottom:10}}>{s.title}</div><div style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{s.desc}</div></div>))}</div></div>
-      </section>
-      <section style={{padding:"72px 5%"}}>
-        <div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Features</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Everything your front desk does — automated</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>{FEATURES.map(f=>(<div key={f.title} className="card" style={{padding:24}}><div style={{fontSize:26,marginBottom:12}}>{f.icon}</div><div style={{fontSize:15,fontWeight:700,marginBottom:8}}>{f.title}</div><div style={{fontSize:13,color:"var(--t2)",lineHeight:1.65}}>{f.desc}</div></div>))}</div></div>
-      </section>
-      <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
-        <div style={{maxWidth:980,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Pricing</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Simple, flat monthly pricing</h2><p style={{fontSize:15,color:"var(--t2)",marginTop:10}}>One-time setup fee + monthly retainer. No per-minute charges. No surprises.</p></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,alignItems:"start"}}>{TIERS.map(t=>(<div key={t.name} className="card" style={{padding:28,border:t.highlight?`2px solid var(--accent)`:"1px solid var(--border)",position:"relative",boxShadow:t.highlight?"0 8px 32px rgba(31,168,160,0.12)":"none"}}>{t.highlight&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",background:"var(--accent)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 14px",borderRadius:100,whiteSpace:"nowrap"}}>MOST POPULAR</div>}<div style={{fontSize:13,fontWeight:600,color:t.color,marginBottom:8}}>{t.name}</div><div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>{t.setup} setup</div><div style={{fontSize:36,fontWeight:800,letterSpacing:"-.03em",color:"var(--t1)",marginBottom:4}}>{t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/ mo</span></div><div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>{t.features.map(f=>(<div key={f} style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:10,fontSize:13}}><CheckCircle size={14} color="var(--success)" style={{flexShrink:0,marginTop:1}}/>{f}</div>))}<button onClick={onGetStarted} className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:20,padding:"11px",fontSize:14,background:t.highlight?"var(--accent)":"var(--bg-base)",color:t.highlight?"#fff":"var(--t1)",border:t.highlight?"none":"1px solid var(--border)"}}>{t.cta} →</button></div>))}</div></div>
-      </section>
-      <section style={{padding:"80px 5%",textAlign:"center"}}>
-        <h2 style={{fontSize:"clamp(26px,4vw,44px)",fontWeight:800,letterSpacing:"-.03em",marginBottom:16}}>Ready to stop missing calls?</h2>
-        <p style={{fontSize:16,color:"var(--t2)",maxWidth:480,margin:"0 auto 32px",lineHeight:1.65}}>Book a 20-minute demo and we'll show you exactly how it works for your business.</p>
-        <button onClick={onGetStarted} className="btn btn-primary" style={{fontSize:16,padding:"14px 32px",borderRadius:10}}>Book your free demo →</button>
-        <p style={{marginTop:16,fontSize:13,color:"var(--t3)"}}>No commitment required</p>
-      </section>
-      <footer style={{borderTop:"1px solid var(--border)",padding:"28px 5%",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
-        <img src={logoFull} alt="AI Automated Calls" style={{height:28,objectFit:"contain"}}/>
-        <div style={{display:"flex",gap:20,fontSize:13,color:"var(--t2)"}}><span style={{cursor:"pointer"}} onClick={onGetStarted}>Sign in</span><span>aiautomatedcalls.com</span><span>© 2026</span></div>
-      </footer>
+      <section style={{padding:"64px 5%",textAlign:"center"}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:12}}>Who we serve</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em",marginBottom:32}}>Built for local businesses that run on calls</h2><div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",maxWidth:700,margin:"0 auto"}}>{NICHES.map(n=>(<span key={n} style={{background:"var(--bg-base)",border:"1px solid var(--border)",borderRadius:100,padding:"8px 18px",fontSize:14,fontWeight:500,color:"var(--t1)"}}>{n}</span>))}</div></section>
+      <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}><div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>How it works</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>From signed to live in 48 hours</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:24}}>{STEPS.map(s=>(<div key={s.n} className="card" style={{padding:28}}><div style={{fontSize:13,fontWeight:700,color:"var(--accent)",letterSpacing:".06em",marginBottom:10}}>{s.n}</div><div style={{fontSize:17,fontWeight:700,marginBottom:10}}>{s.title}</div><div style={{fontSize:14,color:"var(--t2)",lineHeight:1.65}}>{s.desc}</div></div>))}</div></div></section>
+      <section style={{padding:"72px 5%"}}><div style={{maxWidth:960,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Features</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Everything your front desk does — automated</h2></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20}}>{FEATURES.map(f=>(<div key={f.title} className="card" style={{padding:24}}><div style={{fontSize:26,marginBottom:12}}>{f.icon}</div><div style={{fontSize:15,fontWeight:700,marginBottom:8}}>{f.title}</div><div style={{fontSize:13,color:"var(--t2)",lineHeight:1.65}}>{f.desc}</div></div>))}</div></div></section>
+      <section style={{background:"var(--bg-base)",padding:"72px 5%",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}><div style={{maxWidth:980,margin:"0 auto"}}><div style={{textAlign:"center",marginBottom:48}}><p style={{fontSize:13,fontWeight:600,color:"var(--accent)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>Pricing</p><h2 style={{fontSize:"clamp(24px,3vw,36px)",fontWeight:800,letterSpacing:"-.02em"}}>Simple, flat monthly pricing</h2><p style={{fontSize:15,color:"var(--t2)",marginTop:10}}>One-time setup fee + monthly retainer. No per-minute charges. No surprises.</p></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,alignItems:"start"}}>{TIERS.map(t=>(<div key={t.name} className="card" style={{padding:28,border:t.highlight?`2px solid var(--accent)`:"1px solid var(--border)",position:"relative",boxShadow:t.highlight?"0 8px 32px rgba(31,168,160,0.12)":"none"}}>{t.highlight&&<div style={{position:"absolute",top:-13,left:"50%",transform:"translateX(-50%)",background:"var(--accent)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 14px",borderRadius:100,whiteSpace:"nowrap"}}>MOST POPULAR</div>}<div style={{fontSize:13,fontWeight:600,color:t.color,marginBottom:8}}>{t.name}</div><div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>{t.setup} setup</div><div style={{fontSize:36,fontWeight:800,letterSpacing:"-.03em",color:"var(--t1)",marginBottom:4}}>{t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/ mo</span></div><div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>{t.features.map(f=>(<div key={f} style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:10,fontSize:13}}><CheckCircle size={14} color="var(--success)" style={{flexShrink:0,marginTop:1}}/>{f}</div>))}<button onClick={onGetStarted} className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:20,padding:"11px",fontSize:14,background:t.highlight?"var(--accent)":"var(--bg-base)",color:t.highlight?"#fff":"var(--t1)",border:t.highlight?"none":"1px solid var(--border)"}}>{t.cta} →</button></div>))}</div></div></section>
+      <section style={{padding:"80px 5%",textAlign:"center"}}><h2 style={{fontSize:"clamp(26px,4vw,44px)",fontWeight:800,letterSpacing:"-.03em",marginBottom:16}}>Ready to stop missing calls?</h2><p style={{fontSize:16,color:"var(--t2)",maxWidth:480,margin:"0 auto 32px",lineHeight:1.65}}>Book a 20-minute demo and we'll show you exactly how it works for your business.</p><button onClick={onGetStarted} className="btn btn-primary" style={{fontSize:16,padding:"14px 32px",borderRadius:10}}>Book your free demo →</button><p style={{marginTop:16,fontSize:13,color:"var(--t3)"}}>No commitment required</p></section>
+      <footer style={{borderTop:"1px solid var(--border)",padding:"28px 5%",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}><img src={logoFull} alt="AI Automated Calls" style={{height:28,objectFit:"contain"}}/><div style={{display:"flex",gap:20,fontSize:13,color:"var(--t2)"}}><span style={{cursor:"pointer"}} onClick={onGetStarted}>Sign in</span><span>aiautomatedcalls.com</span><span>© 2026</span></div></footer>
     </div>
   );
 };
 
-const LoginPage=({onLogin})=>{const [role,setRole]=useState("admin");return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24}}><div style={{width:"100%",maxWidth:380}}><div style={{textAlign:"center",marginBottom:32}}><img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/><p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p></div><div className="card"><div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg-card2)",borderRadius:8,padding:4}}>{["admin","client"].map(r=>(<button key={r} onClick={()=>setRole(r)} style={{flex:1,padding:"7px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:role===r?"var(--bg-card)":"transparent",color:role===r?"var(--t1)":"var(--t3)"}}>{r==="admin"?"Agency Admin":"Client Portal"}</button>))}</div><div style={{display:"grid",gap:12,marginBottom:16}}><div><label>Email</label><input type="email" defaultValue={role==="admin"?"admin@aiautomatedcalls.com":"dr.park@sunrisedental.com"}/></div><div><label>Password</label><input type="password" defaultValue="••••••••"/></div></div><button className="btn btn-primary" onClick={()=>onLogin(role)} style={{width:"100%",justifyContent:"center",padding:"11px",fontSize:14}}>Sign in as {role==="admin"?"Agency Admin":"Client"}</button><div style={{textAlign:"center",marginTop:14}}><span style={{fontSize:12,color:"var(--t3)"}}>Forgot password? <span style={{color:"var(--accent)",cursor:"pointer"}}>Reset</span></span></div></div><p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:18}}>Secured by Stripe · SOC 2 compliant · 99.8% uptime</p></div></div>);};
+// ─── LOGIN PAGE — Real Supabase Auth ─────────────────────────
+const LoginPage=({onLogin})=>{
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState('');
+
+  const handleLogin=async()=>{
+    if(!email.trim()||!password){setError('Please enter your email and password.');return;}
+    setLoading(true);setError('');
+    try{
+      const {data,error:authErr}=await supabase.auth.signInWithPassword({email:email.trim(),password});
+      if(authErr)throw authErr;
+      // Get role from profiles table
+      const {data:profile}=await supabase.from('profiles').select('role').eq('id',data.user.id).single();
+      onLogin(profile?.role||'client');
+    }catch(err){
+      setError(err.message||'Login failed. Check your email and password.');
+    }finally{setLoading(false);}
+  };
+
+  return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg-base)",padding:24}}>
+      <div style={{width:"100%",maxWidth:380}}>
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <img src={logoFull} alt="AI Automated Calls" style={{height:52,width:"auto",objectFit:"contain",marginBottom:12}}/>
+          <p style={{fontSize:13,color:"var(--t3)",marginTop:4}}>aiautomatedcalls.com</p>
+        </div>
+        <div className="card">
+          <div style={{display:"grid",gap:12,marginBottom:16}}>
+            <div><label>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()} placeholder="you@example.com" autoComplete="email"/></div>
+            <div><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()} placeholder="••••••••" autoComplete="current-password"/></div>
+          </div>
+          {error&&<div style={{fontSize:13,color:'var(--danger)',marginBottom:12,padding:'8px 10px',background:'var(--danger-dim)',borderRadius:6}}>{error}</div>}
+          <button className="btn btn-primary" onClick={handleLogin} disabled={loading} style={{width:"100%",justifyContent:"center",padding:"11px",fontSize:14,opacity:loading?0.75:1}}>
+            {loading?<><Loader size={14} className="aac-spin"/>Signing in…</>:'Sign in'}
+          </button>
+          <div style={{textAlign:"center",marginTop:14}}>
+            <span style={{fontSize:12,color:"var(--t3)"}}>Forgot password? <span style={{color:"var(--accent)",cursor:"pointer"}} onClick={async()=>{if(email){await supabase.auth.resetPasswordForEmail(email);alert('Password reset email sent!');}else{setError('Enter your email first.');}}}>Reset</span></span>
+          </div>
+        </div>
+        <p style={{textAlign:"center",fontSize:11,color:"var(--t3)",marginTop:18}}>Secured by Supabase Auth · SOC 2 compliant</p>
+      </div>
+    </div>
+  );
+};
 
 const PAGES={
   overview:<AdminOverview/>,clients:<AdminClients/>,pipeline:<AdminPipeline/>,
@@ -432,33 +442,64 @@ const PAGES={
   availability:<ClientAvailability/>,billing:<ClientBilling/>,csettings:<ClientSettings/>,
 };
 
+// ─── APP ROOT — session management ───────────────────────────
 export default function App(){
-  const [screen,setScreen]=useState("marketing");
+  // 'loading' | 'marketing' | 'login' | 'app'
+  const [screen,setScreen]=useState('loading');
   const [role,setRole]=useState(null);
-  const [page,setPage]=useState("overview");
+  const [page,setPage]=useState('overview');
   const [col,setCol]=useState(false);
 
-  useEffect(()=>{const el=document.createElement("style");el.textContent=CSS;document.head.appendChild(el);return()=>document.head.removeChild(el);},[]);
-  useEffect(()=>{const s=localStorage.getItem("aac-sidebar-collapsed");if(s==="true")setCol(true);},[]);
-  useEffect(()=>{localStorage.setItem("aac-sidebar-collapsed",String(col));},[col]);
+  // Inject global CSS
+  useEffect(()=>{const el=document.createElement('style');el.textContent=CSS;document.head.appendChild(el);return()=>document.head.removeChild(el);},[]);
+  // Sidebar collapse persistence
+  useEffect(()=>{const s=localStorage.getItem('aac-sidebar-collapsed');if(s==='true')setCol(true);},[]);
+  useEffect(()=>{localStorage.setItem('aac-sidebar-collapsed',String(col));},[col]);
 
-  const handleLogin=useCallback((r)=>{setRole(r);setPage(r==="admin"?"overview":"cdash");setScreen("app");},[]);
-  const handleSwitch=useCallback(()=>{setRole(r=>{const next=r==="admin"?"client":"admin";setPage(next==="admin"?"overview":"cdash");return next;});},[]);
+  // Check session on mount + listen for auth changes
+  useEffect(()=>{
+    const resolveSession=async(session)=>{
+      if(!session){setScreen('marketing');return;}
+      const {data:profile}=await supabase.from('profiles').select('role').eq('id',session.user.id).single();
+      const r=profile?.role||'client';
+      setRole(r);
+      setPage(r==='admin'?'overview':'cdash');
+      setScreen('app');
+    };
 
-  // Public booking page — served at /book?client_id=XXX
+    supabase.auth.getSession().then(({data:{session}})=>resolveSession(session));
+
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+      if(!session){setScreen('marketing');setRole(null);}
+    });
+    return()=>subscription.unsubscribe();
+  },[]);
+
+  const handleLogin=useCallback((r)=>{setRole(r);setPage(r==='admin'?'overview':'cdash');setScreen('app');},[]);
+  const handleLogout=useCallback(async()=>{await supabase.auth.signOut();setScreen('marketing');setRole(null);},[]);
+
+  // Public booking page
   if(window.location.pathname==='/book') return <BookingPage/>;
 
-  if(screen==="marketing") return <MarketingPage onGetStarted={()=>setScreen("login")}/>;
-  if(screen==="login") return <LoginPage onLogin={handleLogin}/>;
+  // Loading screen (checking session)
+  if(screen==='loading') return(
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-base)',gap:12,color:'var(--t3)',fontFamily:'var(--font)'}}>
+      <Loader size={20} className="aac-spin" color="var(--accent)"/>
+      <span style={{fontSize:14}}>Loading…</span>
+    </div>
+  );
 
-  const ml=col?"var(--sidebar-c)":"var(--sidebar-w)";
+  if(screen==='marketing') return <MarketingPage onGetStarted={()=>setScreen('login')}/>;
+  if(screen==='login') return <LoginPage onLogin={handleLogin}/>;
+
+  const ml=col?'var(--sidebar-c)':'var(--sidebar-w)';
   return(
-    <div style={{minHeight:"100vh",background:"var(--bg-base)"}}>
+    <div style={{minHeight:'100vh',background:'var(--bg-base)'}}>
       <Sidebar col={col} setCol={setCol} page={page} setPage={setPage} role={role}/>
       <main className="aac-main" style={{marginLeft:ml}}>
-        <TopBar page={page} role={role} onSwitch={handleSwitch}/>
-        <div className="aac-content" style={{padding:"24px",maxWidth:1100,margin:"0 auto"}}>
-          {PAGES[page]??<div style={{color:"var(--t2)"}}>Page not found</div>}
+        <TopBar page={page} role={role} onLogout={handleLogout}/>
+        <div className="aac-content" style={{padding:'24px',maxWidth:1100,margin:'0 auto'}}>
+          {PAGES[page]??<div style={{color:'var(--t2)'}}>Page not found</div>}
         </div>
         <div className="aac-mobile-spacer"/>
       </main>
