@@ -6,7 +6,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
-import logoFull from "../assets/logos/logo-primary.png";
+import logoFull from "../assets/logos/logo-main.png";
 import logoIcon from "../assets/logos/logo-teal-light.png";
 import {
   LayoutDashboard, Users, GitBranch, BarChart3, Bot, Zap, Megaphone,
