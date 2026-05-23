@@ -52,6 +52,14 @@ User must: import LAYER1_TRIGGER_WORKFLOW.json → set credentials → activate 
 ## ISSUE 13 — VAPI_WEBHOOK_SECRET Not Set ⚠️ Open (P0)
 Need to: generate random string → set in Cloudflare as VAPI_WEBHOOK_SECRET → set same value in Vapi dashboard (Webhooks > Secret).
 
+## ISSUE 14 — Image Duplication Across Niche Pages ✅ Resolved (Session 8)
+3 Unsplash photo IDs appeared on 8–12 pages simultaneously, making every page look identical in the feature grid.
+
+**Root cause:** Template builder reused the same 3 photo IDs for "scheduling", "after-hours", and "outbound" feature cards across all 12 niche page templates.
+
+**Fix:** `run_transforms.py` replaced all 3 globally + applied 8 page-specific overrides.
+See CHANGE_LOG Session 8 for full replacement table and commit SHAs.
+
 ---
 
 ## Correction Log
@@ -67,3 +75,4 @@ Need to: generate random string → set in Cloudflare as VAPI_WEBHOOK_SECRET →
 | C7 | ISSUE 8 | vapi-webhook.js built | Session 6 |
 | C8 | ISSUE 5 | submit-lead.js built, form wired | Session 6 |
 | C9 | ISSUE 4 | LAYER1_TRIGGER_WORKFLOW.json built | Session 7 |
+| C10 | ISSUE 14 | Image dedup + 3D effects — all 12 niche pages | Session 8 |

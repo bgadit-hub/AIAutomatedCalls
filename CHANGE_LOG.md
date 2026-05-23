@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-05-23 | SESSION 8 ─────────────────────────────────────
+
+## 2026-05-23 | FEAT | 3D CSS depth effects — all 12 niche pages
+Added a layered 3D animation system to every niche landing page (`public/{slug}/index.html`).
+
+**Animations added:**
+- `float3d` keyframe: pain-section image box floats with perspective rotation (7s loop)
+- `statGlow` keyframe: hero stat numbers pulse with teal glow (3.8s loop)
+- `.feat:hover`: feature cards tilt on Y/X axes with depth shadow
+- `.feat img`: zoom on card hover
+- `.ki:hover`: knowledge items slide right on hover
+- `.pbox .pbadge`: badge pops forward on Z-axis (translateZ + rotateX)
+- `.hero::before`: ambient radial-gradient orb, bottom-right corner
+- `.btn-hp` / `.btn-teal`: buttons lift on hover with shadow bloom
+- `.pain-img`: thumbnail scales and rotates on row hover
+- `.hero-tag`: subtle teal glow ring
+
+**Pages updated (12):**
+acupuncture, chiropractic, dog-grooming, hormone-therapy, iv-therapy, massage,
+med-spa, optometry, physical-therapy, tattoo, veterinary, weight-loss
+
+## 2026-05-23 | FIX | Image deduplication — all 12 niche pages (ISSUE 14)
+Eliminated 3 cross-page duplicate Unsplash IDs that appeared in 8+ pages simultaneously.
+
+**Universal replacements (all 12 pages):**
+| Old (overused) | New (unique) | Context |
+|---|---|---|
+| `photo-1506784983877-45594efa4cbe` | `photo-1484480974693-6ca0a78fb36b` | calendar/scheduling feat |
+| `photo-1600880292203-757bb62b4baf` | `photo-1534536281715-e28d76689b4d` | after-hours/night-laptop feat |
+| `photo-1551836022-d5d88e9218df` | `photo-1573496359142-b8d87734a5a2` | outbound/headset feat |
+
+**Page-specific fixes:**
+- chiropractic, physical-therapy, optometry, acupuncture: insurance feat image → `photo-1454165804606-c3d57bc86b40`
+- optometry pbox: `photo-1576091160399` → `photo-1516574187841` (was same as vet hero)
+- acupuncture: `photo-1544367567` → `photo-1506126613408` (hero unique)
+- massage: feat2 + feat3 now unique (no longer matches hero/pain)
+- dog-grooming: pbox + feat5 no longer same as hero
+
+**Commits:**
+- veterinary: `99776378` · med-spa: `ab97af31` · chiropractic: `83a41e6b`
+- physical-therapy: `f76f887b` · optometry: `1b2b5459` · weight-loss: `33e2e85b`
+- iv-therapy: `0b60cd45` · tattoo: `dcd93452` · acupuncture: `12117c63`
+- massage: `809a176a` · hormone-therapy: `41674a07` · dog-grooming: `73b17fe8`
+
+---
+
 ## 2026-05-11 | SESSION 2 ─────────────────────────────────────
 
 ## 2026-05-11 | FEAT | Pipeline stage sync to Supabase (AIAutomatedCalls.jsx)
