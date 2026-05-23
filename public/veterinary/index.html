@@ -5,109 +5,144 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>AI Receptionist for Veterinary Clinics | AI Automated Calls</title>
 <meta name="description" content="Never miss another patient call at your vet clinic. AI answering 24/7 — appointment booking, prescription refills, emergency routing, after-hours coverage. Starting at $1,200/month."/>
-<meta name="keywords" content="AI receptionist veterinary clinic, veterinary answering service, AI phone answering veterinary, vet clinic receptionist automation, automated veterinary appointment booking, 24/7 veterinary answering"/>
+<meta name="keywords" content="AI receptionist veterinary clinic, veterinary answering service, AI phone answering veterinary, vet clinic receptionist automation, automated veterinary appointment booking"/>
 <meta property="og:title" content="AI Receptionist for Veterinary Clinics | AI Automated Calls"/>
-<meta property="og:description" content="70% of vet clinic staff time is spent on the phone. Our AI handles every call so your team can focus on the animals in front of them."/>
 <meta property="og:url" content="https://aiautomatedcalls.com/veterinary"/>
 <link rel="canonical" href="https://aiautomatedcalls.com/veterinary"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How does the AI handle veterinary emergencies?","acceptedAnswer":{"@type":"Answer","text":"The AI recognizes emergency language like trouble breathing, possible poisoning, seizure, hit by car and immediately routes to your on-call vet or emergency partner clinic."}},{"@type":"Question","name":"Can the AI handle prescription refill requests?","acceptedAnswer":{"@type":"Answer","text":"Yes. Trained on your refill policy, it captures pet name, medication, and owner details and routes to your team for approval."}},{"@type":"Question","name":"What practice management software does it integrate with?","acceptedAnswer":{"@type":"Answer","text":"Avimark, Cornerstone, EzyVet, Digitail, Shepherd, VetSuite, and most veterinary PMS systems."}},{"@type":"Question","name":"Will pet owners know they are talking to an AI?","acceptedAnswer":{"@type":"Answer","text":"Most won't. Sub-300ms response, warm natural voice trained to use compassionate language specific to your clinic."}},{"@type":"Question","name":"What happens during surgery or high-volume hours?","acceptedAnswer":{"@type":"Answer","text":"The AI answers every call simultaneously with no queue, no hold music, no voicemail. Unlimited concurrent calls."}}]}
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;color:#0B1628;background:#fff;line-height:1.6;-webkit-font-smoothing:antialiased}
-h1,h2,h3,h4{font-family:'Syne',sans-serif}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:#0D1B2A;background:#fff;line-height:1.6;-webkit-font-smoothing:antialiased;font-size:16px}
 img{max-width:100%;height:auto}
 a{text-decoration:none;color:inherit}
-.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.07);padding:0 5%}
-.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
-.nav-logo img{height:38px;width:auto}
-.nav-back{font-size:13px;color:#5C6E7E}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,0.06);padding:0 6%}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:70px}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo img{height:36px;width:auto;display:block}
+.nav-logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em;color:#0D1B2A}
+.nav-back{font-size:13px;color:#64748B;font-weight:500}
 .nav-back:hover{color:#1FA8A0}
 .nav-ctas{display:flex;align-items:center;gap:10px}
-.btn-teal{font-size:14px;font-weight:600;color:#fff;background:#1FA8A0;padding:9px 20px;border-radius:8px;border:1.5px solid #1FA8A0;display:inline-block}
-.btn-outline{font-size:14px;font-weight:600;color:#0B1628;border:1.5px solid #0B1628;padding:8px 18px;border-radius:8px;display:inline-block}
-.hero{position:relative;min-height:90vh;display:flex;align-items:flex-end;overflow:hidden}
+.btn-teal{font-size:13px;font-weight:600;color:#fff;background:#1FA8A0;padding:9px 20px;border-radius:8px;border:none;display:inline-block;letter-spacing:-.01em}
+.btn-teal:hover{background:#178f88}
+.btn-outline{font-size:13px;font-weight:600;color:#0D1B2A;border:1.5px solid #CBD5E1;padding:8px 18px;border-radius:8px;display:inline-block}
+.btn-outline:hover{border-color:#0D1B2A}
+
+/* HERO */
+.hero{position:relative;min-height:92vh;display:flex;align-items:flex-end;overflow:hidden}
 .hero-bg{position:absolute;inset:0;z-index:0}
 .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%}
-.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(11,22,40,0.95) 0%,rgba(11,22,40,0.7) 40%,rgba(11,22,40,0.2) 100%)}
-.hero-content{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:80px 5%;width:100%}
-.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(31,168,160,0.2);border:1px solid rgba(31,168,160,0.4);border-radius:100px;padding:5px 14px;font-size:12px;font-weight:600;color:#1FA8A0;letter-spacing:.06em;margin-bottom:24px}
-.hero h1{font-size:clamp(36px,5vw,64px);font-weight:800;line-height:1.1;letter-spacing:-.03em;color:#fff;margin-bottom:20px;max-width:820px}
-.hero h1 em{color:#1FA8A0;font-style:normal}
-.hero-sub{font-size:18px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:36px;max-width:600px}
-.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:52px}
-.btn-primary{font-size:15px;font-weight:700;color:#fff;background:#1FA8A0;padding:15px 30px;border-radius:10px;border:none;cursor:pointer;display:inline-block}
-.btn-ghost{font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.1);padding:14px 24px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);display:inline-block}
-.hero-stats{display:flex;gap:36px;flex-wrap:wrap}
-.stat-n{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#1FA8A0}
-.stat-l{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px}
-.section{padding:88px 5%}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,18,32,0.96) 0%,rgba(10,18,32,0.72) 45%,rgba(10,18,32,0.18) 100%)}
+.hero-content{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:80px 6%;width:100%}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(31,168,160,0.18);border:1px solid rgba(31,168,160,0.35);border-radius:100px;padding:5px 14px;font-size:11px;font-weight:600;color:#2DD4CC;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px}
+.hero h1{font-size:clamp(38px,5.5vw,68px);font-weight:800;line-height:1.08;letter-spacing:-.035em;color:#fff;margin-bottom:22px;max-width:800px}
+.hero h1 em{color:#2DD4CC;font-style:normal}
+.hero-sub{font-size:17px;font-weight:400;color:rgba(255,255,255,0.65);line-height:1.75;margin-bottom:36px;max-width:580px}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:56px}
+.btn-hero-p{font-size:14px;font-weight:600;color:#fff;background:#1FA8A0;padding:14px 28px;border-radius:9px;border:none;cursor:pointer;display:inline-block;letter-spacing:-.01em}
+.btn-hero-p:hover{background:#178f88}
+.btn-hero-g{font-size:14px;font-weight:500;color:rgba(255,255,255,0.75);background:rgba(255,255,255,0.08);padding:13px 22px;border-radius:9px;border:1px solid rgba(255,255,255,0.18);cursor:pointer;display:inline-block}
+.hero-stats{display:flex;gap:40px;flex-wrap:wrap}
+.hs-n{font-size:30px;font-weight:800;color:#2DD4CC;letter-spacing:-.03em;line-height:1}
+.hs-l{font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);margin-top:5px;line-height:1.4;text-transform:uppercase;letter-spacing:.04em}
+
+/* SECTIONS */
+.section{padding:96px 6%}
 .section-inner{max-width:1160px;margin:0 auto}
-.section-alt{background:#F7F8FA}
-.eyebrow{font-size:12px;font-weight:700;color:#1FA8A0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
-.section-title{font-size:clamp(26px,3.5vw,42px);font-weight:800;line-height:1.15;letter-spacing:-.02em;margin-bottom:14px}
-.section-sub{font-size:15px;color:#5C6E7E;line-height:1.75}
-.section-header{margin-bottom:52px;text-align:center}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.photo-box{border-radius:16px;overflow:hidden;position:relative}
-.photo-box img{width:100%;height:420px;object-fit:cover}
-.photo-badge{position:absolute;top:20px;right:20px;background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 6px 30px rgba(0,0,0,0.15);max-width:200px}
-.badge-stat{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#EF4444;line-height:1}
-.badge-desc{font-size:11px;color:#5C6E7E;margin-top:4px;line-height:1.5}
-.items-list{display:flex;flex-direction:column;gap:24px}
-.item-row{display:flex;gap:16px}
-.item-photo{width:56px;height:56px;border-radius:12px;object-fit:cover;flex-shrink:0}
-.item-title{font-size:15px;font-weight:700;margin-bottom:4px}
-.item-desc{font-size:14px;color:#5C6E7E;line-height:1.65}
-.k-list{display:flex;flex-direction:column;gap:12px}
-.k-item{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;background:#F7F8FA;border:1px solid #E8ECF0}
-.k-check{width:26px;height:26px;border-radius:7px;background:#F0FBF9;display:flex;align-items:center;justify-content:center;color:#1FA8A0;font-size:13px;flex-shrink:0;margin-top:1px}
-.k-title{font-size:14px;font-weight:700;color:#0B1628;margin-bottom:2px}
-.k-desc{font-size:12px;color:#5C6E7E;line-height:1.5}
-.call-box{background:#F7F8FA;border-radius:20px;padding:28px;border:1px solid #E8ECF0}
-.call-label{font-size:12px;font-weight:700;color:#5C6E7E;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
-.call-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px}
-.dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.section-alt{background:#F8FAFC}
+.eyebrow{font-size:11px;font-weight:700;color:#1FA8A0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.h2{font-size:clamp(26px,3.2vw,40px);font-weight:800;line-height:1.15;letter-spacing:-.025em;margin-bottom:14px;color:#0D1B2A}
+.lead{font-size:15px;color:#64748B;line-height:1.8;font-weight:400}
+.hdr{margin-bottom:56px;text-align:center}
+
+/* 2 COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+
+/* PHOTO BOX */
+.photo-box{border-radius:18px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.1)}
+.photo-box img{width:100%;height:440px;object-fit:cover;display:block}
+.photo-badge{position:absolute;top:22px;right:22px;background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-width:196px}
+.badge-stat{font-size:22px;font-weight:800;color:#EF4444;letter-spacing:-.02em;line-height:1}
+.badge-label{font-size:11px;color:#94A3B8;margin-top:5px;line-height:1.5;font-weight:500}
+
+/* PAIN ITEMS */
+.pain-list{display:flex;flex-direction:column;gap:26px;margin-top:36px}
+.pain-item{display:flex;gap:16px}
+.pain-photo{width:60px;height:60px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.12)}
+.pain-title{font-size:15px;font-weight:700;color:#0D1B2A;margin-bottom:5px;letter-spacing:-.01em}
+.pain-desc{font-size:13px;color:#64748B;line-height:1.7}
+
+/* KNOWLEDGE */
+.k-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.k-list{display:flex;flex-direction:column;gap:10px}
+.k-item{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid #E2E8F0;transition:border-color .15s}
+.k-item:hover{border-color:#1FA8A0}
+.k-check{width:24px;height:24px;border-radius:7px;background:rgba(31,168,160,0.1);display:flex;align-items:center;justify-content:center;color:#1FA8A0;font-size:12px;flex-shrink:0;margin-top:2px;font-weight:700}
+.k-title{font-size:13px;font-weight:700;color:#0D1B2A;margin-bottom:3px;letter-spacing:-.01em}
+.k-desc{font-size:12px;color:#64748B;line-height:1.55}
+
+/* CALL BOX */
+.call-box{background:#F8FAFC;border-radius:20px;padding:28px;border:1px solid #E2E8F0}
+.call-label{font-size:10px;font-weight:700;color:#94A3B8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #E2E8F0}
+.call-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.call-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;letter-spacing:.02em}
 .dot-ai{background:rgba(31,168,160,0.12);color:#1FA8A0}
-.dot-caller{background:rgba(11,22,40,0.08);color:#5C6E7E}
-.call-who{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9AABBA;margin-bottom:3px}
-.call-text{font-size:13px;color:#0B1628;line-height:1.55;font-style:italic}
-.call-action{font-size:11px;color:#5C6E7E;background:#fff;border-radius:7px;padding:5px 10px;margin-top:6px;border:1px solid #E8ECF0}
+.dot-po{background:#F1F5F9;color:#64748B}
+.call-speaker{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#94A3B8;margin-bottom:4px}
+.call-text{font-size:13px;color:#0D1B2A;line-height:1.6;font-style:italic}
+.call-action{font-size:11px;color:#64748B;background:#fff;border-radius:8px;padding:7px 12px;margin-top:8px;border:1px solid #E2E8F0;font-weight:500}
+
+/* FEATURES */
 .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.feat{border:1px solid #E8ECF0;border-radius:14px;overflow:hidden;background:#fff}
-.feat img{width:100%;height:150px;object-fit:cover}
-.feat-body{padding:18px}
-.feat-title{font-size:15px;font-weight:700;margin-bottom:7px}
-.feat-desc{font-size:13px;color:#5C6E7E;line-height:1.65}
-.faq-list{max-width:760px;margin:0 auto}
-.faq-item{border-bottom:1px solid #E8ECF0;padding:18px 0}
+.feat{border:1px solid #E2E8F0;border-radius:16px;overflow:hidden;background:#fff;transition:all .2s}
+.feat:hover{border-color:#1FA8A0;box-shadow:0 8px 32px rgba(31,168,160,0.1);transform:translateY(-2px)}
+.feat img{width:100%;height:152px;object-fit:cover;display:block}
+.feat-body{padding:20px}
+.feat-title{font-size:14px;font-weight:700;color:#0D1B2A;margin-bottom:7px;letter-spacing:-.01em}
+.feat-desc{font-size:12px;color:#64748B;line-height:1.7}
+
+/* FAQ */
+.faq-wrap{max-width:740px;margin:0 auto}
+.faq-item{border-bottom:1px solid #E2E8F0;padding:20px 0}
 .faq-item:last-child{border-bottom:none}
 .faq-q{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer}
-.faq-q-text{font-size:15px;font-weight:600;color:#0B1628;line-height:1.4}
-.faq-icon{width:26px;height:26px;border-radius:50%;background:#F0FBF9;border:1px solid rgba(31,168,160,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:#1FA8A0;transition:transform .2s;font-weight:700}
-.faq-a{font-size:14px;color:#5C6E7E;line-height:1.75;padding-top:12px;display:none}
+.faq-text{font-size:15px;font-weight:600;color:#0D1B2A;line-height:1.45;letter-spacing:-.01em}
+.faq-icon{width:26px;height:26px;border-radius:50%;background:rgba(31,168,160,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#1FA8A0;transition:transform .2s;font-weight:700}
+.faq-a{font-size:14px;color:#64748B;line-height:1.8;padding-top:14px;display:none;font-weight:400}
 .faq-item.open .faq-a{display:block}
 .faq-item.open .faq-icon{transform:rotate(45deg)}
-.cta{background:#0B1628;text-align:center;padding:88px 5%}
-.cta h2{font-size:clamp(28px,4vw,46px);font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px}
-.cta p{font-size:16px;color:rgba(255,255,255,0.55);max-width:460px;margin:0 auto 30px;line-height:1.7}
-.footer{background:#060E1C;padding:24px 5%;text-align:center}
-.footer img{height:26px;margin-bottom:10px}
-.footer p{font-size:12px;color:rgba(255,255,255,0.3)}
+
+/* CTA */
+.cta{background:#0D1B2A;text-align:center;padding:100px 6%}
+.cta h2{font-size:clamp(28px,4vw,46px);font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:16px;line-height:1.15}
+.cta p{font-size:16px;color:rgba(255,255,255,0.5);max-width:440px;margin:0 auto 32px;line-height:1.75;font-weight:400}
+
+/* FOOTER */
+.footer{background:#070F1C;padding:28px 6%;text-align:center;border-top:1px solid rgba(255,255,255,0.06)}
+.footer img{height:28px;display:block;margin:0 auto 12px}
+.footer p{font-size:12px;color:rgba(255,255,255,0.3);font-weight:400}
 .footer a{color:#1FA8A0}
-@media(max-width:900px){.two-col{grid-template-columns:1fr;gap:36px}.feats{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.feats{grid-template-columns:1fr}.hero-stats{gap:24px}}
+
+@media(max-width:960px){.two-col,.k-grid{grid-template-columns:1fr;gap:40px}.feats{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.feats{grid-template-columns:1fr}.hero-stats{gap:28px}.hero h1{letter-spacing:-.025em}}
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo"><img src="/assets/logos/logo-main.png" alt="AI Automated Calls" height="38"/></a>
+    <a href="/" class="nav-logo">
+      <img src="/assets/logos/logo-main.png" alt="AI Automated Calls" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+      <span class="nav-logo-text" style="display:none">AI Automated Calls</span>
+    </a>
     <a href="/" class="nav-back">&larr; All industries</a>
     <div class="nav-ctas">
       <a href="/app" class="btn-outline">Sign in</a>
@@ -125,13 +160,13 @@ a{text-decoration:none;color:inherit}
     <h1>Dr. Chen is mid-surgery.<br/>The phone just rang<br/><em>three times.</em><br/>We answered all three.</h1>
     <p class="hero-sub">AI Automated Calls deploys a veterinary-trained AI receptionist &mdash; answering every call, booking appointments, handling prescription refills, and triaging emergencies. Your team stays focused on the animals in front of them.</p>
     <div class="hero-ctas">
-      <a href="#contact" class="btn-primary">Book a free demo &rarr;</a>
-      <a href="#how-it-works" class="btn-ghost">See how it works</a>
+      <a href="#contact" class="btn-hero-p">Book a free demo &rarr;</a>
+      <a href="#how-it-works" class="btn-hero-g">See how it works</a>
     </div>
     <div class="hero-stats">
-      <div><div class="stat-n">30&ndash;42%</div><div class="stat-l">of vet clinic calls go unanswered</div></div>
-      <div><div class="stat-n">70%</div><div class="stat-l">of staff time spent on the phone</div></div>
-      <div><div class="stat-n">$150K</div><div class="stat-l">avg revenue lost to missed calls</div></div>
+      <div><div class="hs-n">30&ndash;42%</div><div class="hs-l">of vet clinic calls<br/>go unanswered</div></div>
+      <div><div class="hs-n">70%</div><div class="hs-l">of staff time<br/>on the phone</div></div>
+      <div><div class="hs-n">$150K</div><div class="hs-l">avg revenue lost<br/>to missed calls</div></div>
     </div>
   </div>
 </section>
@@ -140,27 +175,27 @@ a{text-decoration:none;color:inherit}
   <div class="section-inner two-col">
     <div>
       <div class="eyebrow">The veterinary call problem</div>
-      <h2 class="section-title">Your team can't leave a patient on the table to answer the phone.</h2>
-      <p class="section-sub" style="margin-bottom:32px">In a vet clinic, the phone can never be the priority &mdash; but for pet owners in panic, it absolutely is. Every missed call is a lost client, a missed recheck, or a pet that needed help.</p>
-      <div class="items-list">
-        <div class="item-row">
-          <img class="item-photo" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=112&h=112&q=80" alt="Vet during procedure"/>
-          <div><div class="item-title">Surgery &amp; exam hours</div><div class="item-desc">Vets and techs can't leave a procedure to answer the phone. That's when your missed call rate spikes &mdash; and urgent callers call your competitor.</div></div>
+      <h2 class="h2">Your team can't leave a patient on the table to answer the phone.</h2>
+      <p class="lead">In a vet clinic, the phone can never be the priority &mdash; but for pet owners in panic, it absolutely is. Every missed call is a lost client, a missed recheck, or a pet that needed help.</p>
+      <div class="pain-list">
+        <div class="pain-item">
+          <img class="pain-photo" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=120&h=120&q=80" alt="Vet during procedure"/>
+          <div><div class="pain-title">Surgery &amp; exam hours</div><div class="pain-desc">Vets and techs can't leave a procedure to answer the phone. That's when your missed call rate spikes &mdash; and urgent callers find your competitor instead.</div></div>
         </div>
-        <div class="item-row">
-          <img class="item-photo" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=112&h=112&q=80" alt="Vet with dog"/>
-          <div><div class="item-title">After-hours emergencies</div><div class="item-desc">Pet emergencies don't keep business hours. A dog that swallows something toxic at 9pm needs immediate guidance &mdash; not a voicemail.</div></div>
+        <div class="pain-item">
+          <img class="pain-photo" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=120&h=120&q=80" alt="Vet with dog"/>
+          <div><div class="pain-title">After-hours emergencies</div><div class="pain-desc">Pet emergencies don't keep business hours. A dog that swallows something toxic at 9pm needs immediate guidance &mdash; not a voicemail.</div></div>
         </div>
-        <div class="item-row">
-          <img class="item-photo" src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=112&h=112&q=80" alt="Pet owner"/>
-          <div><div class="item-title">The Monday surge</div><div class="item-desc">Monday mornings are your highest call volume day. Weekend health concerns pile up at once while your staff is already slammed.</div></div>
+        <div class="pain-item">
+          <img class="pain-photo" src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=120&h=120&q=80" alt="Pet owner"/>
+          <div><div class="pain-title">The Monday surge</div><div class="pain-desc">Monday mornings are your highest call volume day. Weekend health concerns pile up at once while every staff member is already slammed.</div></div>
         </div>
       </div>
     </div>
     <div>
       <div class="photo-box">
         <img src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=900&q=80" alt="Busy veterinary clinic"/>
-        <div class="photo-badge"><div class="badge-stat">3 missed</div><div class="badge-desc">calls during this morning&rsquo;s surgery block. 2 were new patient inquiries.</div></div>
+        <div class="photo-badge"><div class="badge-stat">3 missed</div><div class="badge-label">calls during this morning&rsquo;s surgery block. 2 were new patient inquiries.</div></div>
       </div>
     </div>
   </div>
@@ -168,29 +203,29 @@ a{text-decoration:none;color:inherit}
 
 <section class="section section-alt" id="how-it-works">
   <div class="section-inner">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div class="k-grid">
       <div>
         <div class="eyebrow">What your AI knows</div>
-        <h2 class="section-title">Trained on your clinic. Not a generic vet script.</h2>
-        <p class="section-sub" style="margin-bottom:28px">Before deployment, a 90-minute knowledge extraction session teaches your AI your clinic specifically &mdash; not a template.</p>
+        <h2 class="h2">Trained on your clinic. Not a generic vet script.</h2>
+        <p class="lead" style="margin-bottom:28px">Before deployment, a 90-minute knowledge extraction session teaches your AI your clinic specifically &mdash; not a template.</p>
         <div class="k-list">
           <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Species &amp; breeds you treat</div><div class="k-desc">Dogs, cats, exotics, livestock &mdash; and which you refer out, and to whom</div></div></div>
           <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Vaccination schedules &amp; protocols</div><div class="k-desc">Your exact vaccine schedule, core vs. lifestyle vaccines, FAQ responses on timing</div></div></div>
           <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Emergency recognition &amp; routing</div><div class="k-desc">Emergency language triggers, on-call vet protocol, ER partner clinic info</div></div></div>
-          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Prescription refill policy</div><div class="k-desc">Which meds require a recent exam, which can be approved remotely, how to route requests</div></div></div>
-          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Your booking system &amp; schedule</div><div class="k-desc">Integrates with Avimark, Cornerstone, EzyVet, Shepherd &mdash; books real appointments directly</div></div></div>
-          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Insurance &amp; payment options</div><div class="k-desc">CareCredit, Scratchpay, pet insurance you accept, your payment policy for new clients</div></div></div>
+          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Prescription refill policy</div><div class="k-desc">Which meds require a recent exam, which can be approved remotely</div></div></div>
+          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Your booking system &amp; schedule</div><div class="k-desc">Integrates with Avimark, Cornerstone, EzyVet, Shepherd &mdash; books real appointments</div></div></div>
+          <div class="k-item"><div class="k-check">&#10003;</div><div><div class="k-title">Insurance &amp; payment options</div><div class="k-desc">CareCredit, Scratchpay, pet insurance you accept, payment policy for new clients</div></div></div>
         </div>
       </div>
       <div>
         <div class="call-box">
-          <div class="call-label">Live call example &mdash; Emergency at 11:23 PM</div>
-          <div class="call-step"><div class="dot dot-caller">PO</div><div><div class="call-who">Pet owner</div><div class="call-text">&ldquo;Hi &mdash; my dog just ate a whole pack of sugar-free gum. We&rsquo;re panicking.&rdquo;</div></div></div>
-          <div class="call-step"><div class="dot dot-ai">AI</div><div><div class="call-who">Your AI &mdash; 1.2 seconds</div><div class="call-text">&ldquo;I understand &mdash; sugar-free gum contains xylitol which is very serious for dogs. How long ago did this happen, and how many pieces approximately?&rdquo;</div></div></div>
-          <div class="call-step"><div class="dot dot-caller">PO</div><div><div class="call-who">Pet owner</div><div class="call-text">&ldquo;Maybe 20 minutes ago. The whole pack &mdash; 15 pieces.&rdquo;</div></div></div>
-          <div class="call-step"><div class="dot dot-ai">AI</div><div><div class="call-who">Your AI</div><div class="call-text">&ldquo;This is a veterinary emergency. Get to an emergency clinic immediately &mdash; I&rsquo;m sending you Valley Emergency Vet&rsquo;s address and number right now.&rdquo;</div><div class="call-action">Emergency routing triggered &rarr; SMS sent &rarr; Dr. Chen notified</div></div></div>
+          <div class="call-label">Live call &mdash; Emergency at 11:23 PM</div>
+          <div class="call-row"><div class="call-dot dot-po">PO</div><div><div class="call-speaker">Pet owner</div><div class="call-text">&ldquo;Hi &mdash; my dog just ate a whole pack of sugar-free gum. We&rsquo;re panicking.&rdquo;</div></div></div>
+          <div class="call-row"><div class="call-dot dot-ai">AI</div><div><div class="call-speaker">Your AI &mdash; 1.2 seconds</div><div class="call-text">&ldquo;I understand &mdash; sugar-free gum contains xylitol which is very serious for dogs. How long ago did this happen, and approximately how many pieces?&rdquo;</div></div></div>
+          <div class="call-row"><div class="call-dot dot-po">PO</div><div><div class="call-speaker">Pet owner</div><div class="call-text">&ldquo;Maybe 20 minutes ago. The whole pack &mdash; 15 pieces.&rdquo;</div></div></div>
+          <div class="call-row"><div class="call-dot dot-ai">AI</div><div><div class="call-speaker">Your AI</div><div class="call-text">&ldquo;This is a veterinary emergency. Get to an emergency clinic immediately &mdash; I&rsquo;m sending Valley Emergency Vet&rsquo;s address and number to you now.&rdquo;</div><div class="call-action">Emergency routing triggered &rarr; SMS sent to owner &rarr; Dr. Chen notified</div></div></div>
         </div>
-        <p style="font-size:12px;color:#9AABBA;margin-top:12px;text-align:center">Emergency detected &rarr; compassionate response &rarr; proper routing &rarr; team notified</p>
+        <p style="font-size:11px;color:#94A3B8;margin-top:14px;text-align:center;font-weight:500">Emergency detected &rarr; compassionate response &rarr; proper routing &rarr; team notified</p>
       </div>
     </div>
   </div>
@@ -198,13 +233,13 @@ a{text-decoration:none;color:inherit}
 
 <section class="section">
   <div class="section-inner">
-    <div class="section-header"><div class="eyebrow">Features for veterinary clinics</div><h2 class="section-title">Everything your front desk handles &mdash; automated</h2></div>
+    <div class="hdr"><div class="eyebrow">Features built for vets</div><h2 class="h2">Everything your front desk handles &mdash; automated</h2></div>
     <div class="feats">
       <div class="feat"><img src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=600&h=300&q=80" alt="Appointment booking"/><div class="feat-body"><h3 class="feat-title">24/7 appointment booking</h3><p class="feat-desc">Books directly into your PMS &mdash; wellness exams, vaccines, dental cleanings, rechecks. Sets the right type and duration automatically.</p></div></div>
-      <div class="feat"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=600&h=300&q=80" alt="Emergency care"/><div class="feat-body"><h3 class="feat-title">Emergency triage &amp; routing</h3><p class="feat-desc">Recognizes 40+ emergency keywords and routes immediately. No pet gets left in a voicemail queue.</p></div></div>
-      <div class="feat"><img src="https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=600&h=300&q=80" alt="Prescriptions"/><div class="feat-body"><h3 class="feat-title">Prescription refill intake</h3><p class="feat-desc">Captures pet name, medication, owner details. Routes per your refill policy. Reduces refill call volume by 60%.</p></div></div>
+      <div class="feat"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=600&h=300&q=80" alt="Emergency triage"/><div class="feat-body"><h3 class="feat-title">Emergency triage &amp; routing</h3><p class="feat-desc">Recognizes 40+ emergency keywords and routes immediately. No pet gets left in a voicemail queue.</p></div></div>
+      <div class="feat"><img src="https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=600&h=300&q=80" alt="Prescription refills"/><div class="feat-body"><h3 class="feat-title">Prescription refill intake</h3><p class="feat-desc">Captures pet name, medication, owner details. Routes per your refill policy. Reduces refill call volume by 60%.</p></div></div>
       <div class="feat"><img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&h=300&q=80" alt="After-hours"/><div class="feat-body"><h3 class="feat-title">After-hours coverage</h3><p class="feat-desc">Your clinic never goes dark. Evenings, weekends, holidays &mdash; every caller gets an immediate, helpful response.</p></div></div>
-      <div class="feat"><img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=600&h=300&q=80" alt="Reminders"/><div class="feat-body"><h3 class="feat-title">Confirmations &amp; reminders</h3><p class="feat-desc">Every booking triggers a confirmation text. Reminder sequences reduce no-shows by 40%.</p></div></div>
+      <div class="feat"><img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=600&h=300&q=80" alt="Reminders"/><div class="feat-body"><h3 class="feat-title">Confirmations &amp; reminders</h3><p class="feat-desc">Every booking triggers a confirmation text. Reminder sequences reduce no-shows by up to 40%.</p></div></div>
       <div class="feat"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&h=300&q=80" alt="Reporting"/><div class="feat-body"><h3 class="feat-title">Call recordings &amp; reports</h3><p class="feat-desc">Every call transcribed. Your dashboard shows bookings, recovery rate, and monthly ROI.</p></div></div>
     </div>
   </div>
@@ -212,27 +247,27 @@ a{text-decoration:none;color:inherit}
 
 <section class="section section-alt" id="faq">
   <div class="section-inner">
-    <div class="section-header"><div class="eyebrow">FAQ</div><h2 class="section-title">Questions from veterinary clinic owners</h2></div>
-    <div class="faq-list">
-      <div class="faq-item"><div class="faq-q"><span class="faq-q-text">How does the AI handle veterinary emergencies?</span><span class="faq-icon">+</span></div><div class="faq-a">The AI recognizes emergency language &mdash; trouble breathing, possible poisoning, seizure, hit by car. It immediately routes to your on-call vet, emergency partner clinic, or ASPCA Poison Control. It never puts an emergency caller through a standard booking flow.</div></div>
-      <div class="faq-item"><div class="faq-q"><span class="faq-q-text">Can the AI handle prescription refill requests?</span><span class="faq-icon">+</span></div><div class="faq-a">Yes. Trained on your refill policy &mdash; which medications require a recent exam, which can be approved remotely. Captures pet name, medication, and owner details and routes to your team for approval.</div></div>
-      <div class="faq-item"><div class="faq-q"><span class="faq-q-text">What practice management software does it integrate with?</span><span class="faq-icon">+</span></div><div class="faq-a">Avimark, Cornerstone, EzyVet, Digitail, Shepherd, VetSuite, and most veterinary PMS systems. Appointments book directly into your schedule. If you use another system, we&rsquo;ll build the integration &mdash; included in setup.</div></div>
-      <div class="faq-item"><div class="faq-q"><span class="faq-q-text">Will pet owners know they&rsquo;re talking to an AI?</span><span class="faq-icon">+</span></div><div class="faq-a">Most won&rsquo;t. Sub-300ms response, warm compassionate voice. We train the AI to use your clinic&rsquo;s name and familiar language &mdash; &ldquo;We&rsquo;re so sorry to hear Buddy isn&rsquo;t feeling well.&rdquo; You can disclose it&rsquo;s an AI if you prefer full transparency.</div></div>
-      <div class="faq-item"><div class="faq-q"><span class="faq-q-text">What happens during surgery or high-volume hours?</span><span class="faq-icon">+</span></div><div class="faq-a">The AI answers every call simultaneously &mdash; no queue, no hold music, no voicemail. Whether your whole team is in surgery or it&rsquo;s a Monday morning rush, every caller gets an immediate response. Unlimited concurrent calls.</div></div>
+    <div class="hdr"><div class="eyebrow">FAQ</div><h2 class="h2">Questions from veterinary clinic owners</h2></div>
+    <div class="faq-wrap">
+      <div class="faq-item"><div class="faq-q"><span class="faq-text">How does the AI handle veterinary emergencies?</span><span class="faq-icon">+</span></div><div class="faq-a">The AI recognizes emergency language &mdash; trouble breathing, possible poisoning, seizure, hit by car. It immediately routes to your on-call vet, emergency partner clinic, or ASPCA Poison Control. It never puts an emergency caller through a standard booking flow.</div></div>
+      <div class="faq-item"><div class="faq-q"><span class="faq-text">Can the AI handle prescription refill requests?</span><span class="faq-icon">+</span></div><div class="faq-a">Yes. Trained on your refill policy &mdash; which medications require a recent exam, which can be approved remotely. Captures pet name, medication, and owner details and routes to your team for approval.</div></div>
+      <div class="faq-item"><div class="faq-q"><span class="faq-text">What practice management software does it integrate with?</span><span class="faq-icon">+</span></div><div class="faq-a">Avimark, Cornerstone, EzyVet, Digitail, Shepherd, VetSuite, and most veterinary PMS systems. Appointments book directly into your schedule. If you use another system, we&rsquo;ll build the integration &mdash; included in setup.</div></div>
+      <div class="faq-item"><div class="faq-q"><span class="faq-text">Will pet owners know they&rsquo;re talking to an AI?</span><span class="faq-icon">+</span></div><div class="faq-a">Most won&rsquo;t. Sub-300ms response, warm compassionate voice. We train the AI to use your clinic&rsquo;s name and familiar language. You can disclose it&rsquo;s an AI if you prefer full transparency.</div></div>
+      <div class="faq-item"><div class="faq-q"><span class="faq-text">What happens during surgery or high-volume hours?</span><span class="faq-icon">+</span></div><div class="faq-a">The AI answers every call simultaneously &mdash; no queue, no hold music, no voicemail. Whether your whole team is in surgery or it&rsquo;s a Monday morning rush, every caller gets an immediate response. Unlimited concurrent calls.</div></div>
     </div>
   </div>
 </section>
 
 <section class="cta" id="contact">
-  <div class="eyebrow" style="color:#1FA8A0;margin-bottom:16px">Book a free demo</div>
+  <div class="eyebrow" style="color:#1FA8A0;margin-bottom:18px">Book a free demo</div>
   <h2>Your patients deserve a clinic that answers when they call.</h2>
-  <p>Book a 20-minute demo. We&rsquo;ll walk you through a live test call trained on a veterinary clinic.</p>
-  <a href="mailto:demo@aiautomatedcalls.com" class="btn-teal" style="padding:14px 30px;font-size:15px;font-weight:700">Book free demo &rarr;</a>
-  <p style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.3)">No commitment &middot; No credit card &middot; Live in 48 hours</p>
+  <p>20-minute demo. We&rsquo;ll walk you through a live test call trained on a veterinary clinic &mdash; no commitment required.</p>
+  <a href="mailto:demo@aiautomatedcalls.com" class="btn-teal" style="padding:14px 32px;font-size:14px;font-weight:600">Book free demo &rarr;</a>
+  <p style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.25);font-weight:400">No commitment &middot; No credit card &middot; Live in 48 hours</p>
 </section>
 
 <footer class="footer">
-  <img src="/assets/logos/logo-main.png" alt="AI Automated Calls" height="26"/>
+  <img src="/assets/logos/logo-main.png" alt="AI Automated Calls" onerror="this.style.display='none'"/>
   <p>&copy; 2026 AI Automated Calls &middot; <a href="/">aiautomatedcalls.com</a></p>
 </footer>
 
