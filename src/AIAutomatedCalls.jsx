@@ -1,5 +1,4 @@
 import MarketingPage from "./MarketingPage";
-import MarketingPage from "./MarketingPage";
 
 // ============================================================
 //  AI AUTOMATED CALLS — Full Dashboard · aiautomatedcalls.com
@@ -368,7 +367,6 @@ const ClientAvailability=()=>{
   );
 };
 
-<<<<<<< HEAD
 const ClientBilling=()=>(<div className="fade-in"><SH title="Billing" sub="Standard Plan · Active"/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}><div className="card" style={{background:"linear-gradient(135deg,rgba(31,168,160,.07),rgba(61,123,217,.05))",border:"1px solid rgba(31,168,160,.14)"}}><div style={{fontSize:11,color:"var(--accent)",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Current Plan</div><div style={{fontSize:28,fontWeight:800,marginBottom:4}}>Standard</div><div style={{fontSize:18,fontWeight:600,color:"var(--accent)",marginBottom:16}}>$2,000<span style={{fontSize:13,color:"var(--t3)"}}>/ month</span></div>{["AI voice receptionist 24/7","Outbound lead follow-up","SMS + email sequences","No-show re-booking","Monthly ROI report","Dashboard access"].map(f=>(<div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}><CheckCircle size={13} color="var(--success)"/><span style={{fontSize:13,color:"var(--t2)"}}>{f}</span></div>))}</div><div style={{display:"flex",flexDirection:"column",gap:14}}><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Next Billing</div><div style={{fontSize:18,fontWeight:700}}>June 1, 2026</div><div style={{fontSize:12,color:"var(--t2)",marginTop:2}}>$2,000 via Stripe · Visa ····4242</div></div><div className="card-sm"><div style={{fontSize:12,color:"var(--t3)",marginBottom:4}}>Setup Fee</div><div style={{fontSize:18,fontWeight:700}}>$1,500</div><div style={{fontSize:12,color:"var(--success)",marginTop:2}}>✓ Paid</div></div><button className="btn btn-ghost" style={{justifyContent:"center",padding:10}}>Upgrade to Premium — $3,000/mo</button></div></div><div className="card" style={{padding:0,overflow:"hidden"}}><div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",fontSize:14,fontWeight:600}}>Invoice History</div><table><thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead><tbody>{[["INV-0012","May 1, 2026","$2,000"],["INV-0011","Apr 1, 2026","$2,000"],["INV-0010","Mar 1, 2026","$2,000"],["INV-0009","Oct 3, 2025","$3,500"]].map(([id,d,a])=>(<tr key={id}><td style={{fontWeight:500,color:"var(--t1)"}}>{id}</td><td>{d}</td><td style={{fontWeight:700,color:"var(--t1)"}}>{a}</td><td><Bdg type="success" ch="paid"/></td><td><button className="btn btn-ghost" style={{padding:"3px 8px",fontSize:11}}><Download size={11}/>PDF</button></td></tr>))}</tbody></table></div></div>);
 
 const ClientSettings=()=>{const [saved,setSaved]=useState(false);return(<div className="fade-in"><SH title="Settings" sub="Configure your AI receptionist"/><div style={{display:"grid",gap:16}}><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Business Information</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><div><label>Business Name</label><input defaultValue="Sunrise Dental"/></div><div><label>Phone Number</label><input defaultValue="+1 (512) 884-2211"/></div><div><label>Address</label><input defaultValue="2420 S Lamar Blvd, Austin TX"/></div><div><label>Website</label><input defaultValue="sunrisedental.com"/></div></div></div><div className="card"><div style={{fontSize:14,fontWeight:600,marginBottom:16}}>AI Agent Settings</div><div style={{display:"grid",gap:12}}><div><label>Agent Voice</label><select><option>Brian (Professional, Male) · ElevenLabs Flash</option></select></div><div><label>Greeting Message</label><textarea defaultValue="Thank you for calling! This is your AI assistant. How can I help?" rows={3}/></div></div></div><button className="btn btn-primary" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}} style={{justifyContent:"center",padding:"10px",fontSize:14}}>{saved?<><Check size={14}/>Saved!</>:"Save Changes"}</button></div></div>);};
@@ -418,10 +416,6 @@ const ClientSettings=()=>{const [saved,setSaved]=useState(false);return(<div cla
     </div>
   );
 };
-=======
-// ─── LOGIN ────────────────────────────────────────────────────
-// ─── MARKETING PAGE ──────────────────────────────────────────
->>>>>>> 613a446 (Use MarketingPage with niche links)
 
 const LoginPage=({onLogin})=>{
   const [email,setEmail]=useState('');
