@@ -117,7 +117,7 @@ const MarketingPage=({onGetStarted})=>{
                 <div style={{fontSize:13,fontWeight:600,color:t.color,marginBottom:8}}>{t.name}</div>
                 <div style={{fontSize:13,color:"var(--t2)",marginBottom:4}}>{t.setup} setup</div>
                 <div style={{fontSize:36,fontWeight:800,letterSpacing:"-.03em",color:"var(--t1)",marginBottom:4}}>
-                  {t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/ mo</span>
+                  {t.price}<span style={{fontSize:14,fontWeight:400,color:"var(--t2)"}}>/mo</span>
                 </div>
                 <div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>
                 {t.features.map(f=>(<div key={f} style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:10,fontSize:13}}><CheckCircle size={14} color="var(--success)" style={{flexShrink:0,marginTop:1}}/>{f}</div>))}
